@@ -13,7 +13,7 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+        <div className="w-full max-w-full flex h-16 items-center justify-between px-4 md:px-6">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
             <Link href="/products">
@@ -29,7 +29,7 @@ export default async function AdminPage() {
         </div>
       </header>
 
-      <main className="container py-8 px-4 md:px-6">
+      <main className="w-full max-w-full py-8 px-4 md:px-6">
         <div className="mb-6">
           <h2 className="text-3xl font-bold tracking-tight">Product Management</h2>
           <p className="text-muted-foreground">Manage your product catalog</p>

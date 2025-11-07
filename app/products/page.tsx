@@ -1,10 +1,6 @@
-import { Header } from "@/components/header"
-import { ProductGrid } from "@/components/product-grid"
 import { ProductFilters } from "@/components/product-filters"
-import { getProducts, getCategories } from "@/lib/data"
-import { BookmarkIcon, ShoppingBag, ShoppingBasket, ShoppingCart } from "lucide-react"
-import { OrderDraftSheet } from "@/components/products/OrderDraftSheet"
-import { Toggle } from "@/components/ui/toggle"
+import { ProductGrid } from "@/components/product-grid"
+import { getCategories, getProducts } from "@/lib/data"
 
 export default async function ProductsPage({
   searchParams,
@@ -23,26 +19,19 @@ export default async function ProductsPage({
 
   return (
     <div className="w-full h-full flex flex-col">
-      <Header />
-      <main className="min-h-screen bg-background w-full flex justify-center">
-        <div className="container py-8 px-4 md:px-6 w-full">
-          <div className="flex items-center mb-6">
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold tracking-tight mb-2">Our Products</h1>
-              <p className="text-muted-foreground text-lg">Discover our amazing collection</p>
-            </div>
-            <div className="flex-shrink-0 ml-4">
-
-              <OrderDraftSheet />
-            </div>
+      <main className="min-h-screen bg-background w-full">
+        <div className="w-full max-w-full py-8 px-4 md:px-6">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold tracking-tight mb-2">Our Products</h1>
+            <p className="text-muted-foreground text-lg">Discover our amazing collection</p>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            <aside className="lg:w-64 flex-shrink-0">
+          <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
+            <aside className="lg:w-64 flex-shrink-0 lg:sticky lg:top-20">
               <ProductFilters categories={categories} currentCategory={params.category} currentSearch={params.search} />
             </aside>
 
-            <div className="flex-1 overflow-auto" style={{ maxHeight: "calc(100vh - 180px)" }}>
+            <div className="flex-1 min-w-0">
               {products.length > 0 ? (
                 <ProductGrid products={products.map(product => ({
                   ...product,

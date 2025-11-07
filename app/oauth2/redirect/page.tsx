@@ -73,11 +73,12 @@ export default function OAuth2Redirect() {
         handleOAuth2Redirect()
     }, [searchParams, router])
 
+    // Modified container to always center spinner correctly on mobile and desktop
     return (
-        <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="min-h-[60vh] flex flex-col items-center justify-center w-full">
             {statusState === "loading" && (
                 <div className="flex flex-col items-center justify-center gap-6 w-full h-full">
-                    <div className="relative flex items-center justify-center w-full h-full">
+                    <div className="relative flex items-center justify-center w-32 h-32 max-w-[90vw] mx-auto">
                         {/* Outer ring */}
                         <div className="w-16 h-16 border-4 border-orange-200 rounded-full"></div>
                         {/* Spinning ring */}

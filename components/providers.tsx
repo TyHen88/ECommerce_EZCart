@@ -26,7 +26,7 @@ export function Providers({ children, session }: ProvidersProps) {
             <QueryClientProvider client={queryClient}>
                 {children}
                 <Toaster
-                    position="top-right"
+                    position="top-center"
                     toastOptions={{
                         style: {
                             pointerEvents: 'auto'

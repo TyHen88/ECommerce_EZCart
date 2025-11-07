@@ -1,25 +1,23 @@
 "use client"
-import { notFound, useParams } from "next/navigation"
-import { Header } from "@/components/header"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Package, ShoppingCartIcon, Tag } from "lucide-react"
-import Link from "next/link"
-import { getProductById } from "@/lib/data"
-import { OrderDraftSheet } from "@/components/products/OrderDraftSheet"
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselPrevious,
   CarouselNext,
+  CarouselPrevious,
 } from "@/components/ui/carousel"
-import Image from "next/image"
-import React, { useEffect } from "react"
-import { useCartStore } from "@/stores"
-import { toast } from "sonner"
+import { getProductById } from "@/lib/data"
 import { Product } from "@/lib/types"
+import { useCartStore } from "@/stores"
+import { ArrowLeft, CheckIcon, Package, ShoppingCartIcon, Tag, XIcon } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { notFound, useParams } from "next/navigation"
+import { useEffect } from "react"
+import { toast } from "sonner"
 
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>()
@@ -42,11 +40,15 @@ export default function ProductDetailPage() {
         image_url: productData.image_url || "",
         category: productData.category || ""
       })
-      toast.success(`${productData.name} has been added to your cart`)
+      toast(`${productData.name} has been added.`, {
+        icon: <CheckIcon className="text-green-500 w-5 h-5" />
+      })
     } else {
       // Remove from cart
       removeItem(productData.id)
-      toast.success(`${productData.name} has been removed from your cart`)
+      toast(`${productData.name} has been removed.`, {
+        icon: <XIcon className="text-red-500 w-5 h-5" />
+      })
     }
   }
 
@@ -69,9 +71,8 @@ export default function ProductDetailPage() {
 
   return (
     <>
-      <Header />
-      <main className="min-h-screen bg-background w-full flex justify-center">
-        <div className="container py-8 px-4 md:px-6">
+      <main className="min-h-screen bg-background w-full">
+        <div className="w-full max-w-full py-8 px-4 md:px-6">
           <div className="flex justify-between items-center mb-6">
             <Link href="/products">
               <Button variant="ghost" size="sm" className="mb-6">
@@ -79,9 +80,7 @@ export default function ProductDetailPage() {
                 Back to Products
               </Button>
             </Link>
-            <div className="flex justify-end mt-4">
-              <OrderDraftSheet />
-            </div>
+
           </div>
 
           <div className="grid gap-8 lg:grid-cols-2">
@@ -97,7 +96,7 @@ export default function ProductDetailPage() {
                           alt={image?.alt || ""}
                           fill
                           priority={index === 0}
-                          className="object-contain p-12 transition-transform duration-300 hover:scale-105"
+                          className="object-contain p-4 transition-transform duration-300 hover:scale-105"
                           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 500px"
                         />
                       </div>

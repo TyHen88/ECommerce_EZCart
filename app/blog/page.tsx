@@ -8,7 +8,7 @@ export default function BlogPage() {
   ];
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen w-full p-8">
       <h1 className="text-4xl font-bold mb-8">Blog Posts</h1>
       <div className="grid gap-4">
         {posts.map((post) => (

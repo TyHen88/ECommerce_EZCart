@@ -10,7 +10,7 @@ export default async function NewProductPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container flex h-16 items-center px-4 md:px-6">
+        <div className="w-full max-w-full flex h-16 items-center px-4 md:px-6">
           <Link href="/admin">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -20,7 +20,8 @@ export default async function NewProductPage() {
         </div>
       </header>
 
-      <main className="container max-w-2xl py-8 px-4 md:px-6">
+      <main className="w-full max-w-full py-8 px-4 md:px-6 flex justify-center">
+        <div className="w-full max-w-2xl">
         <div className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight">Add New Product</h1>
           <p className="text-muted-foreground">Fill in the details to create a new product</p>
