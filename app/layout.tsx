@@ -18,29 +18,38 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Easy-Cart - Your Online Store",
+  title: "EZ-Carts - Your Online Store",
   description: "Modern e-commerce platform with admin management. Shop the latest products with secure checkout.",
   generator: "Next.js",
   manifest: "/manifest.json",
   keywords: ["ecommerce", "shop", "online store", "products", "shopping"],
-  authors: [{ name: "Easy-Cart" }],
+  authors: [{ name: "EZ-Carts" }],
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Easy-Cart",
+    title: "EZ-Carts",
   },
+  icons: {
+    icon: [
+      { url: "/easycarts-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/easycarts-128x128.png", sizes: "128x128", type: "image/png" },
+    ],
+  },
+
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: "website",
-    siteName: "Easy-Cart",
-    title: "Easy-Cart - Your Online Store",
+    siteName: "EZ-Carts",
+    title: "EZ-Carts - Your Online Store",
     description: "Modern e-commerce platform with admin management",
   },
   twitter: {
     card: "summary",
-    title: "Easy-Cart - Your Online Store",
+    title: "EZ-Carts - Your Online Store",
     description: "Modern e-commerce platform with admin management",
   },
 }
@@ -59,10 +68,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/icon-192x192.jpg" />
-      </head>
       <body className={`${geist.className} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
@@ -71,11 +76,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Providers>
+            <RouteProgress />
             <Header />
             {children}
           </Providers>
         </ThemeProvider>
-        <RouteProgress />
         <Analytics />
       </body>
     </html>

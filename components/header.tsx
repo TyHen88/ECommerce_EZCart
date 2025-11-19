@@ -1,29 +1,26 @@
 "use client"
 
-import { SettingsDialog } from "@/components/profile/SettingDialog"
+import { SettingsDialog } from "@/components/profile-settings/SettingDialog"
 import { Button } from "@/components/ui/button"
 import useFetchProfile from "@/hooks/useFetchProfile"
 import { UserInfo } from "@/lib/types"
-import { LayoutDashboard, LogOut, Settings, ShoppingBag, Sun, User } from "lucide-react"
+import { History, LayoutDashboard, LogOut, Settings, ShoppingBag, User } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { ModeToggle } from "./mode-toggle"
 import { OrderDraftSheet } from "./products/OrderDraftSheet"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
-import { useTheme } from "next-themes"
-import { useRouter } from "next/navigation"
 
 export function Header() {
   const [user, setUser] = useState<UserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isOpenSettingsMenu, setIsOpenSettingsMenu] = useState(false)
   const [isOpenSettings, setIsOpenSettings] = useState(false)
-  const { theme } = useTheme()
   const { data: userInfoData, isError, error, refetch, isFetching } = useFetchProfile()
   const [isOpenModeToggle, setIsOpenModeToggle] = useState(false)
   const router = useRouter();
-
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem('authToken') : null
     const userInfoStr = typeof window !== "undefined" ? localStorage.getItem('userInfo') : null
@@ -78,9 +75,9 @@ export function Header() {
         {/* Left (Logo/brand) */}
         <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2 min-w-0">
-            <ShoppingBag className="h-6 w-6 shrink-0" />
+            <Image src="/easycarts-128x128.png" alt="EZ-Carts.com" width={32} height={32} className="shrink-0" />
             <span className="font-bold text-xl truncate max-w-[120px] sm:max-w-none">
-              Easy-Cart
+              EZ-Carts.com
             </span>
           </Link>
         </div>
@@ -95,12 +92,20 @@ export function Header() {
               Products
             </Button>
           </Link>
+          <Link href="/shop" className="hidden sm:block">
+            <Button variant="ghost" tabIndex={0}>
+              Shops
+            </Button>
+          </Link>
           {userInfoData?.data?.username && (
             <div className="text-xs text-muted-foreground flex items-center h-8 whitespace-nowrap">
               Welcome, {userInfoData.data.username}
             </div>
           )}
 
+          <div className="flex items-center">
+            <History className="h-5 w-5" />
+          </div>
           <div className="flex items-center">
             <OrderDraftSheet />
           </div>
@@ -164,6 +169,7 @@ export function Header() {
                         className="justify-start w-full"
                         tabIndex={0}
                         type="button"
+                        onClick={() => router.push("/setting")}
                       >
                         <Settings className="mr-2 h-4 w-4" />
                         Edit Profile / Settings
@@ -244,7 +250,7 @@ export function Header() {
           </Popover>
         </nav>
       </div>
-      <SettingsDialog isOpen={isOpenSettings} setIsOpen={setIsOpenSettings} userInfo={userInfoData} />
+      {/* <SettingsDialog isOpen={isOpenSettings} setIsOpen={setIsOpenSettings} userInfo={userInfoData?.data} /> */}
     </header >
   )
 }

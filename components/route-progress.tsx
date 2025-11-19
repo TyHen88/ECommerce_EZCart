@@ -28,6 +28,8 @@ export function RouteProgress() {
 
     const animationRef = React.useRef<number | null>(null)
     const hideTimeoutRef = React.useRef<number | null>(null)
+    const startTimeRef = React.useRef<number | null>(null)
+    const isNavigatingRef = React.useRef(false)
 
     const clearTimers = React.useCallback(() => {
         if (animationRef.current !== null) {
@@ -42,6 +44,7 @@ export function RouteProgress() {
 
     const startProgress = React.useCallback(() => {
         clearTimers()
+        startTimeRef.current = Date.now()
         setProgress({ isVisible: true, percent: 8 })
 
         const tick = () => {
@@ -58,57 +61,112 @@ export function RouteProgress() {
     }, [clearTimers])
 
     const completeProgress = React.useCallback(() => {
-        setProgress((prev) => ({ ...prev, percent: 100 }))
         clearTimers()
+        setProgress((prev) => ({ ...prev, percent: 100 }))
+
+        // Ensure minimum display time of 200ms
+        const elapsed = startTimeRef.current ? Date.now() - startTimeRef.current : 0
+        const minDisplayTime = 200
+        const remainingTime = Math.max(0, minDisplayTime - elapsed)
+
         // Give the CSS transition a moment, then hide and reset
         hideTimeoutRef.current = window.setTimeout(() => {
             setProgress({ isVisible: false, percent: 0 })
-        }, 250) as unknown as number
+            startTimeRef.current = null
+        }, 300 + remainingTime) as unknown as number
     }, [clearTimers])
 
-    // Detect route/search changes
+    // Intercept link clicks to start progress immediately
     React.useEffect(() => {
-        // Ignore on first mount: show only on subsequent navigations
-        let didMount = true
-        const id = window.requestAnimationFrame(() => {
-            if (didMount) {
-                didMount = false
+        if (!isClient) return
+
+        const handleClick = (e: MouseEvent) => {
+            const target = e.target as HTMLElement
+            // Find the closest anchor or link element
+            const link = target.closest('a[href]')
+
+            if (!link) return
+
+            const href = link.getAttribute('href')
+            if (!href) return
+
+            // Skip if it's an external link, anchor link, or has target="_blank"
+            if (
+                href.startsWith('http') ||
+                href.startsWith('mailto:') ||
+                href.startsWith('tel:') ||
+                link.getAttribute('target') === '_blank' ||
+                (href.startsWith('#') && href.length > 1)
+            ) {
                 return
             }
-        })
-        return () => cancelAnimationFrame(id)
-    }, [])
 
-    // Start on change
+            // Skip if it's the same route
+            const currentPath = window.location.pathname + window.location.search
+            const normalizedHref = href.split('?')[0] // Compare paths without query params
+            const normalizedCurrent = currentPath.split('?')[0]
+
+            if (normalizedHref === normalizedCurrent && href === currentPath) {
+                return
+            }
+
+            // Start progress immediately on click
+            if (!isNavigatingRef.current) {
+                isNavigatingRef.current = true
+                startProgress()
+            }
+        }
+
+        // Add click listener with capture phase to catch early
+        document.addEventListener('click', handleClick, true)
+
+        return () => {
+            document.removeEventListener('click', handleClick, true)
+        }
+    }, [isClient, pathname, startProgress])
+
+    // Complete progress when route actually changes
     const key = React.useMemo(() => `${pathname}?${searchParams?.toString() ?? ""}`, [pathname, searchParams])
 
     const isFirstLoadRef = React.useRef(true)
+    const previousKeyRef = React.useRef<string | null>(null)
+
     React.useEffect(() => {
         if (isFirstLoadRef.current) {
             isFirstLoadRef.current = false
+            previousKeyRef.current = key
             return
         }
-        startProgress()
-        // Complete when the new route paint has occurred
-        const afterPaint = () => completeProgress()
-        const raf = requestAnimationFrame(() => {
-            // Allow a tiny delay for data loading; if still visible, complete after a grace period
-            const timeout = window.setTimeout(afterPaint, 400)
-            // If the component unmounts or key changes again, cleanup
-            return () => window.clearTimeout(timeout)
-        })
-        return () => {
-            cancelAnimationFrame(raf)
-            clearTimers()
+
+        // Only complete if we were navigating and the route changed
+        if (isNavigatingRef.current && previousKeyRef.current !== key) {
+            previousKeyRef.current = key
+            isNavigatingRef.current = false
+
+            // Complete when the new route paint has occurred
+            const afterPaint = () => completeProgress()
+            let timeoutId: NodeJS.Timeout | null = null
+            const raf = requestAnimationFrame(() => {
+                // Allow a delay for data loading; complete after navigation is done
+                timeoutId = window.setTimeout(afterPaint, 300) as unknown as NodeJS.Timeout
+            })
+            return () => {
+                cancelAnimationFrame(raf)
+                if (timeoutId) {
+                    window.clearTimeout(timeoutId)
+                }
+            }
+        } else {
+            previousKeyRef.current = key
         }
-    }, [key, startProgress, completeProgress, clearTimers])
+    }, [key, completeProgress])
 
     if (!isClient || !progress.isVisible) return null
 
     return (
         <div
             aria-hidden
-            className="fixed left-0 right-0 top-0 z-[1000] pointer-events-none px-0"
+            className="fixed left-0 right-0 top-0 z-[9999] pointer-events-none"
             style={{
                 height: 3,
             }}
@@ -116,13 +174,17 @@ export function RouteProgress() {
             <ProgressPrimitive.Root
                 value={progress.percent}
                 className={cn(
-                    "bg-blue-100 relative h-full w-full overflow-hidden rounded-none",
+                    "relative h-full w-full overflow-hidden",
                     "bg-transparent"
                 )}
             >
                 <ProgressPrimitive.Indicator
-                    className="bg-blue-500 h-full w-full flex-1 transition-all shadow-lg shadow-blue-500/30"
-                    style={{ transform: `translateX(-${100 - (progress.percent || 0)}%)` }}
+                    className="h-full transition-all duration-300 ease-out shadow-lg shadow-blue-500/50"
+                    style={{
+                        transform: `translateX(-${100 - (progress.percent || 0)}%)`,
+                        width: '100%',
+                        backgroundColor: 'rgb(59, 130, 246)', // blue-500
+                    }}
                 />
             </ProgressPrimitive.Root>
         </div>

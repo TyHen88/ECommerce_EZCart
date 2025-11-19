@@ -78,14 +78,7 @@ export default function OAuth2Redirect() {
         <div className="min-h-[60vh] flex flex-col items-center justify-center w-full">
             {statusState === "loading" && (
                 <div className="flex flex-col items-center justify-center gap-6 w-full h-full">
-                    <div className="relative flex items-center justify-center w-32 h-32 max-w-[90vw] mx-auto">
-                        {/* Outer ring */}
-                        <div className="w-16 h-16 border-4 border-orange-200 rounded-full"></div>
-                        {/* Spinning ring */}
-                        <div className="absolute top-0 left-0 w-16 h-16 border-4 border-transparent border-t-orange-500 rounded-full animate-spin"></div>
-                        {/* Inner pulsing dot */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
-                    </div>
+                    <h1 className="text-2xl font-bold">Welcome back!</h1>
                 </div>
             )}
             {statusState === "error" && (

@@ -53,7 +53,7 @@ export function ProductGrid({ products }: { products: Product[] }) {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((product) => (
         <Card key={product.id} className="flex flex-col">
           <CardHeader className="p-0">
@@ -83,19 +83,19 @@ export function ProductGrid({ products }: { products: Product[] }) {
             </div>
           </CardContent>
           <CardFooter className="p-6 pt-0 gap-2 flex items-stretch">
-            <Link href={`/products/${product.id}`} className="flex-1">
+            <Link href={`/products/${product.id}`} className="flex-1" >
               <Button className="w-full cursor-pointer">View Details</Button>
             </Link>
             <Toggle
-              aria-label="Add to cart"
+              aria-label="Save"
               size="default"
               variant="outline"
               onClick={() => handleToggleCart(product, !items.some(p => p.id === product.id))}
               className="h-10 cursor-pointer data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-blue-500 data-[state=on]:*:[svg]:stroke-blue-500 flex-1"
             >
-              <ShoppingCartIcon className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">{items.some(p => p.id === product.id) ? "In Cart" : "Add to Cart"}</span>
-              <span className="sm:hidden">{items.some(p => p.id === product.id) ? "Cart" : "Add"}</span>
+              <BookmarkIcon className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">{items.some(p => p.id === product.id) ? "In Wishlist" : "Add to Wishlist"}</span>
+              <span className="sm:hidden">{items.some(p => p.id === product.id) ? "Wishlist" : "Add"}</span>
             </Toggle>
           </CardFooter>
         </Card>

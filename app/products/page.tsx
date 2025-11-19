@@ -22,8 +22,8 @@ export default async function ProductsPage({
       <main className="min-h-screen bg-background w-full">
         <div className="w-full max-w-full py-8 px-4 md:px-6">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold tracking-tight mb-2">Our Products</h1>
-            <p className="text-muted-foreground text-lg">Discover our amazing collection</p>
+            <h1 className="text-4xl font-bold tracking-tight mb-2">Browse Products from Every Shop</h1>
+            <p className="text-muted-foreground text-lg">Explore our diverse, handpicked selection just for you.</p>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-8 lg:items-start">

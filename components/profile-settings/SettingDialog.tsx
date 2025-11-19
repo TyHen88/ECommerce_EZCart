@@ -10,10 +10,9 @@ import Image from "next/image"
 import { useState } from "react"
 import { Button } from "../ui/button"
 export function SettingsDialog({ isOpen, setIsOpen, userInfo }: { isOpen: boolean, setIsOpen: (isOpen: boolean) => void, userInfo: any }) {
-    const data = userInfo?.data
-    console.log("userInfo", data)
-    const [fullName, setFullName] = useState(data?.fullName)
-    const [username, setUsername] = useState(data?.username)
+    const [fullName, setFullName] = useState(userInfo?.fullName)
+    const [username, setUsername] = useState(userInfo?.username)
+    console.log("userInfo", userInfo)
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <form>
@@ -39,7 +38,7 @@ export function SettingsDialog({ isOpen, setIsOpen, userInfo }: { isOpen: boolea
                                     className="cursor-pointer group relative block w-20 h-20 rounded-full"
                                 >
                                     <Image
-                                        src={data?.profileImageUrl || "/profile.jpg"}
+                                        src={userInfo?.profileImageUrl || "/profile.jpg"}
                                         alt="Profile"
                                         width={80}
                                         height={80}
@@ -62,7 +61,7 @@ export function SettingsDialog({ isOpen, setIsOpen, userInfo }: { isOpen: boolea
                                 <CardHeader className="flex flex-row items-center justify-between">
                                     <div className="flex items-center">
                                         <CardTitle className="text-xl font-semibold leading-none tracking-tight mr-4">Account</CardTitle>
-                                        {data?.authProvider?.toLowerCase() === "google" && (
+                                        {userInfo?.authProvider?.toLowerCase() === "google" && (
                                             <span className="flex items-center text-sm text-muted-foreground">
                                                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                                                     <path
@@ -82,7 +81,7 @@ export function SettingsDialog({ isOpen, setIsOpen, userInfo }: { isOpen: boolea
                                                         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                                                     />
                                                 </svg>
-                                                {data?.email}
+                                                {userInfo?.email}
                                             </span>
                                         )}
                                     </div>
@@ -91,11 +90,11 @@ export function SettingsDialog({ isOpen, setIsOpen, userInfo }: { isOpen: boolea
                                 <CardContent className="grid gap-6">
                                     <div className="grid gap-3">
                                         <Label htmlFor="tabs-demo-name">Name</Label>
-                                        <Input id="tabs-demo-name" defaultValue={data?.fullName} onChange={(e) => setFullName(e.target.value)} />
+                                        <Input id="tabs-demo-name" defaultValue={userInfo?.fullName} onChange={(e) => setFullName(e.target.value)} />
                                     </div>
                                     <div className="grid gap-3">
                                         <Label htmlFor="tabs-demo-username">Username</Label>
-                                        <Input id="tabs-demo-username" defaultValue={data?.username} onChange={(e) => setUsername(e.target.value)} />
+                                        <Input id="tabs-demo-username" defaultValue={userInfo?.username} onChange={(e) => setUsername(e.target.value)} />
                                     </div>
                                 </CardContent>
                                 <CardFooter>

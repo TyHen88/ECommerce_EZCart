@@ -1,144 +1,136 @@
 "use client"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import {
     Sheet,
     SheetClose,
     SheetContent,
     SheetDescription,
-    SheetFooter,
     SheetHeader,
     SheetTitle,
-    SheetTrigger,
+    SheetTrigger
 } from "@/components/ui/sheet"
-import { CartItem, useCartStore } from "@/stores/cart.store"
-import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react"
-import { useState } from "react"
-import { PaymentMethodDialog } from "../payway/paymentMethodDialog"
-
-const demoCart = [
-    {
-        id: 1,
-        name: "Coffee Beans",
-        price: 14.5,
-        quantity: 2,
-        image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=facearea&w=128&q=80"
-    },
-    {
-        id: 2,
-        name: "Reusable Cup",
-        price: 8.0,
-        quantity: 1,
-        image: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=facearea&w=128&q=80"
-    }
-]
+import { useCartStore } from "@/stores/cart.store"
+import { Heart, ShoppingCart, Trash2 } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export function OrderDraftSheet() {
-    const [isOpenPaymentMethod, setIsOpenPaymentMethod] = useState(false);
-    const { items, updateQuantity, removeItem } = useCartStore()
-    const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
+    const router = useRouter()
+    const { items, removeItem } = useCartStore()
 
-    // Only increase quantity, don't add item again
-    const handleAddItem = (item: CartItem) => {
-        updateQuantity(item.id, item.quantity + 1)
-    }
-
-    // Decrease quantity or remove if zero/one
-    const handleRemoveItem = (item: CartItem) => {
-        updateQuantity(item.id, item.quantity - 1)
-        //console.log(cartItems)
-    }
 
     return (
-        <>
-            <Sheet>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative">
-                        <ShoppingCart className="h-6 w-6" />
-                        <span className="absolute -top-1 -right-1 bg-primary/80 text-xs text-white rounded-full px-1 dark:bg-primary text-white dark:text-zinc-900">
+        <Sheet>
+            <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                    <Heart className="h-5 w-5" />
+                    {items.length > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                             {items.length}
                         </span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent>
-                    <SheetHeader>
-                        <SheetTitle>Your Order Draft</SheetTitle>
-                        <SheetDescription>
-                            Review your selected items and quantities before checkout.
-                        </SheetDescription>
-                    </SheetHeader>
-                    <div className="flex flex-1 flex-col gap-6 px-2 pt-3 pb-1 overflow-auto">
-                        {items.length === 0 ? (
-                            <div className="text-center text-muted-foreground py-8">
-                                Your order draft is empty.
-                            </div>
-                        ) : (
-                            <ul className="flex flex-col gap-4">
-                                {items.map(item => (
-                                    <li key={item.id} className="flex items-center justify-between bg-muted rounded-lg p-3">
-                                        <div className="flex items-center gap-3">
-                                            <img
-                                                src={item.image_url}
-                                                alt={item.name}
-                                                className="w-14 h-14 rounded object-cover border"
-                                            />
-                                            <div>
-                                                <span className="block font-medium">{item.name}</span>
-                                                <span className="text-muted-foreground text-sm">
-                                                    ${item.price.toFixed(2)} x {item.quantity}
-                                                </span>
+                    )}
+                </Button>
+            </SheetTrigger>
+            <SheetContent className="flex flex-col w-full sm:max-w-lg">
+                <SheetHeader>
+                    <SheetTitle>Your Wishlist</SheetTitle>
+                    <SheetDescription>
+                        {items.length > 0
+                            ? `${items.length} ${items.length === 1 ? 'item' : 'items'} in your wishlist`
+                            : "Your wishlist is empty"}
+                    </SheetDescription>
+                </SheetHeader>
+
+                <div className="flex-1 overflow-y-auto">
+                    {items.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                            <ShoppingCart className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                            <p className="text-lg font-semibold mb-2">Your wishlist is empty</p>
+                            <p className="text-sm text-muted-foreground mb-6">
+                                Add some products to your wishlist to get started
+                            </p>
+                            <Link href="/products">
+                                <SheetClose asChild>
+                                    <Button>Browse Products</Button>
+                                </SheetClose>
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="space-y-4 p-4" >
+                            {items.map(item => (
+                                <Card key={item.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer" >
+                                    <div className="flex gap-4 items-center">
+                                        {/* Product Image */}
+                                        <SheetClose asChild>
+                                            <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-muted border" onClick={() => router.push(`/products/${item.id}`)}>
+                                                {item.image_url ? (
+                                                    <Image
+                                                        src={item.image_url}
+                                                        alt={item.name}
+                                                        fill
+                                                        className="object-cover"
+                                                        sizes="80px"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                                                        No Image
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </SheetClose>
+
+
+                                        {/* Product Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-2 mb-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-semibold text-sm line-clamp-2 mb-1">
+                                                        {item.name}
+                                                    </h3>
+                                                    {item.category && (
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            {item.category}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                                                    onClick={() => removeItem(item.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+
+                                            {/* Price and Quantity Controls */}
+                                            <div className="flex items-center justify-between mt-3">
+                                                <div className="flex flex-col">
+                                                    <span className="text-lg font-bold text-primary">
+                                                        ${(item.price * item.quantity).toFixed(2)}
+                                                    </span>
+                                                    {item.quantity > 1 && (
+                                                        <span className="text-xs text-muted-foreground">
+                                                            ${item.price.toFixed(2)} each
+                                                        </span>
+                                                    )}
+                                                </div>
+
+
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-primary"
-                                                title="Remove one"
-                                                onClick={() => handleRemoveItem(item)}
-                                                disabled={item.quantity <= 1}
-                                            >
-                                                <Minus className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-primary"
-                                                title="Add one"
-                                                onClick={() => handleAddItem(item)}
-                                            >
-                                                <Plus className="h-4 w-4" />
-                                            </Button>
-                                            {/* Remove all units of this item */}
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive"
-                                                title="Remove"
-                                                onClick={() => removeItem(item.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                    <div className="flex justify-between items-center px-4 py-2 border-t mt-2">
-                        <span className="font-semibold text-lg">Total</span>
-                        <span className="font-bold text-lg">${total.toFixed(2)}</span>
-                    </div>
-                    <SheetFooter>
-                        <Button className="w-full" disabled={items.length === 0} onClick={() => setIsOpenPaymentMethod(true)}>
-                            Proceed to Checkout
-                        </Button>
-                        <SheetClose asChild>
-                            <Button variant="outline" className="w-full">Close</Button>
-                        </SheetClose>
-                    </SheetFooter>
-                </SheetContent>
-            </Sheet>
-            {isOpenPaymentMethod && <PaymentMethodDialog isOpen={isOpenPaymentMethod} setIsOpen={setIsOpenPaymentMethod} />}
-        </>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+
+            </SheetContent>
+        </Sheet>
     )
 }

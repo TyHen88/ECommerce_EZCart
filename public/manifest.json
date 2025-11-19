@@ -1,6 +1,6 @@
 {
-  "name": "Easy-Cart - E-Commerce Store",
-  "short_name": "Easy-Cart",
+  "name": "EZ-Carts - E-Commerce Store",
+  "short_name": "EZ-Carts",
   "description": "Modern e-commerce platform with admin management",
   "start_url": "/",
   "display": "standalone",

@@ -13,6 +13,42 @@ export interface Product {
     created_at: string
 }
 
+export interface Review {
+    id: string
+    rating: number
+    comment: string
+    created_at: string
+}
+
+export interface Order {
+    id: string
+    product_id: string
+    quantity: number
+    created_at: string
+}
+
+export interface Shop {
+    id: number
+    shopName: string
+    brandName: string
+    owner: string
+    logo: string
+    coverImage: string
+    location: string
+    rating: number
+    totalReviews: number
+    totalProducts: number
+    followers: number
+    verified: boolean
+    featured: boolean
+    category: string
+    memberSince: string
+    description: string
+    responseTime: string
+    tags: string[]
+    badges: string[]
+}
+
 export interface User {
     id: string
     email: string
@@ -713,6 +749,136 @@ export const products: Product[] =
         },
     ]
 
+// Static shops data
+export const shops: Shop[] = [
+    {
+        id: 1,
+        shopName: "Nordic Home Studio",
+        brandName: "NORDIC HOME",
+        owner: "Emma Anderson",
+        logo: "🏠",
+        coverImage: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        rating: 4.9,
+        totalReviews: 2847,
+        totalProducts: 156,
+        followers: 12500,
+        verified: true,
+        featured: true,
+        category: "furniture",
+        location: "Brooklyn, NY",
+        memberSince: "2020",
+        description: "Scandinavian-inspired furniture and home decor. Quality craftsmanship with minimalist design.",
+        responseTime: "< 2 hours",
+        tags: ["Scandinavian", "Minimalist", "Eco-friendly"],
+        badges: ["Top Seller", "Fast Shipping"]
+    },
+    {
+        id: 2,
+        shopName: "Luxe Living Boutique",
+        brandName: "LUXE LIVING",
+        owner: "Michael Chen",
+        logo: "✨",
+        coverImage: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+        rating: 4.8,
+        totalReviews: 1923,
+        totalProducts: 203,
+        followers: 8900,
+        verified: true,
+        featured: true,
+        category: "decor",
+        location: "Manhattan, NY",
+        memberSince: "2019",
+        description: "Premium home decor and luxury furnishings. Curated collections for sophisticated spaces.",
+        responseTime: "< 3 hours",
+        tags: ["Luxury", "Modern", "Premium"],
+        badges: ["Verified Seller", "Best Quality"]
+    },
+    {
+        id: 3,
+        shopName: "Artisan Wood Works",
+        brandName: "ARTISAN",
+        owner: "James Wilson",
+        logo: "🪵",
+        coverImage: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+        rating: 4.7,
+        totalReviews: 1456,
+        totalProducts: 89,
+        followers: 6200,
+        verified: true,
+        featured: false,
+        category: "furniture",
+        location: "Portland, OR",
+        memberSince: "2021",
+        description: "Handcrafted wooden furniture made from sustainable materials. Each piece tells a story.",
+        responseTime: "< 4 hours",
+        tags: ["Handmade", "Sustainable", "Custom"],
+        badges: ["Eco-Friendly"]
+    },
+    {
+        id: 4,
+        shopName: "Urban Lights Co.",
+        brandName: "URBAN LIGHTS",
+        owner: "Sarah Martinez",
+        logo: "💡",
+        coverImage: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+        rating: 4.9,
+        totalReviews: 3102,
+        totalProducts: 124,
+        followers: 15300,
+        verified: true,
+        featured: true,
+        category: "lighting",
+        location: "Los Angeles, CA",
+        memberSince: "2018",
+        description: "Contemporary lighting solutions for modern homes. From minimalist to statement pieces.",
+        responseTime: "< 1 hour",
+        tags: ["Contemporary", "LED", "Smart Home"],
+        badges: ["Top Rated", "Fast Response"]
+    },
+    {
+        id: 5,
+        shopName: "Cozy Textiles Hub",
+        brandName: "COZY",
+        owner: "Lisa Johnson",
+        logo: "🧶",
+        coverImage: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
+        rating: 4.6,
+        totalReviews: 892,
+        totalProducts: 178,
+        followers: 4800,
+        verified: false,
+        featured: false,
+        category: "textiles",
+        location: "Seattle, WA",
+        memberSince: "2022",
+        description: "Soft furnishings, cushions, and textiles to add warmth to any space.",
+        responseTime: "< 5 hours",
+        tags: ["Comfortable", "Colorful", "Affordable"],
+        badges: ["Rising Star"]
+    },
+    {
+        id: 6,
+        shopName: "Garden Paradise",
+        brandName: "GARDEN PARADISE",
+        owner: "Robert Taylor",
+        logo: "🌿",
+        coverImage: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+        rating: 4.8,
+        totalReviews: 1567,
+        totalProducts: 95,
+        followers: 7600,
+        verified: true,
+        featured: false,
+        category: "outdoor",
+        location: "Austin, TX",
+        memberSince: "2020",
+        description: "Outdoor furniture and garden accessories. Transform your outdoor living space.",
+        responseTime: "< 3 hours",
+        tags: ["Outdoor", "Weather-resistant", "Stylish"],
+        badges: ["Best Outdoor"]
+    }
+]
+
 // Static users data
 export const users: User[] = [
     {
@@ -770,4 +936,57 @@ export function getUserById(id: string): User | null {
 
 export function getUserByEmail(email: string): User | null {
     return users.find(u => u.email === email) || null
+}
+
+export function getShopById(id: number): Shop | null {
+    return shops.find(s => s.id === id) || null
+}
+
+export function getShopByName(name: string): Shop | null {
+    const normalizedInput = name.toLowerCase().trim()
+
+    return shops.find(s => {
+        // Convert shop name to kebab-case for comparison
+        const shopNameKebab = s.shopName.toLowerCase().replace(/\s+/g, '-')
+        // Also check direct lowercase match
+        const shopNameLower = s.shopName.toLowerCase()
+
+        return (
+            shopNameKebab === normalizedInput ||
+            shopNameLower === normalizedInput ||
+            shopNameLower.replace(/\s+/g, '-') === normalizedInput
+        )
+    }) || null
+}
+
+export function getProductsByShop(shopName: string, filters?: {
+    category?: string
+    search?: string
+    inStock?: boolean
+}): Product[] {
+    const shop = getShopByName(shopName)
+    if (!shop) return []
+
+    let filteredProducts = [...products]
+
+    // Filter by shop's category
+    filteredProducts = filteredProducts.filter(p => p.category.toLowerCase() === shop.category.toLowerCase())
+
+    if (filters?.inStock) {
+        filteredProducts = filteredProducts.filter(p => p.stock > 0)
+    }
+
+    if (filters?.category) {
+        filteredProducts = filteredProducts.filter(p => p.category === filters.category)
+    }
+
+    if (filters?.search) {
+        const searchLower = filters.search.toLowerCase()
+        filteredProducts = filteredProducts.filter(p =>
+            p.name.toLowerCase().includes(searchLower) ||
+            p.description.toLowerCase().includes(searchLower)
+        )
+    }
+
+    return filteredProducts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 }

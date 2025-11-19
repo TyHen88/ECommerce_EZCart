@@ -1,4 +1,5 @@
 "use client"
+import { ProductGrid } from "@/components/product-grid"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -9,14 +10,14 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import { getProductById } from "@/lib/data"
+import { getProductById, getProducts } from "@/lib/data"
 import { Product } from "@/lib/types"
 import { useCartStore } from "@/stores"
-import { ArrowLeft, CheckIcon, Package, ShoppingCartIcon, Tag, XIcon } from "lucide-react"
+import { ArrowLeft, BookmarkIcon, CheckIcon, Package, RotateCcw, Shield, ShoppingCartIcon, Star, Tag, Truck, XIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { notFound, useParams } from "next/navigation"
-import { useEffect } from "react"
+import { notFound, useParams, useRouter } from "next/navigation"
+import { useEffect, useMemo } from "react"
 import { toast } from "sonner"
 
 export default function ProductDetailPage() {
@@ -24,6 +25,13 @@ export default function ProductDetailPage() {
   const id = params?.id
   const product = id ? getProductById(id) : null
   const { addItem, removeItem, items } = useCartStore();
+  const router = useRouter()
+  // Get related products (same category, excluding current product)
+  const relatedProducts = useMemo(() => {
+    if (!product) return []
+    const allProducts = getProducts({ category: product.category, inStock: true })
+    return allProducts.filter(p => p.id !== product.id).slice(0, 6)
+  }, [product])
 
   if (!product) {
     notFound()
@@ -69,145 +77,230 @@ export default function ProductDetailPage() {
     }
   }, [])
 
+  const isInCart = items.some(p => p.id === product.id)
+
   return (
-    <>
-      <main className="min-h-screen bg-background w-full">
-        <div className="w-full max-w-full py-8 px-4 md:px-6">
-          <div className="flex justify-between items-center mb-6">
-            <Link href="/products">
-              <Button variant="ghost" size="sm" className="mb-6">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Products
-              </Button>
-            </Link>
+    <main className="min-h-screen bg-background w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back Button */}
+        <Link href="/products">
+          <Button variant="ghost" size="sm" className="mb-6">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Products
+          </Button>
+        </Link>
 
-          </div>
-
-          <div className="grid gap-8 lg:grid-cols-2">
-            {/* Carousel Container */}
-            <div className="relative w-full max-w-lg mx-auto">
+        {/* Main Product Section */}
+        <div className="grid gap-8 lg:grid-cols-2 mb-16">
+          {/* Image Carousel */}
+          <div className="relative w-full">
+            <Card className="overflow-hidden">
               <Carousel className="w-full">
                 <CarouselContent>
                   {product.image_url?.map((image: { url: string; alt: string } | null, index: number) => (
                     <CarouselItem key={index}>
-                      <div className="relative w-full aspect-square bg-gradient-to-br from-muted/50 to-muted rounded-xl overflow-hidden border border-border/50 shadow-sm">
+                      <div className="relative w-full aspect-square bg-gradient-to-br from-muted/50 to-muted overflow-hidden">
                         <Image
                           src={image?.url || ""}
-                          alt={image?.alt || ""}
+                          alt={image?.alt || product.name}
                           fill
                           priority={index === 0}
-                          className="object-contain p-4 transition-transform duration-300 hover:scale-105"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 500px"
+                          className="object-contain p-4 md:p-8 transition-transform duration-300 hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
                         />
                       </div>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="left-4 h-10 w-10 shadow-md hover:shadow-lg transition-shadow" />
-                <CarouselNext className="right-4 h-10 w-10 shadow-md hover:shadow-lg transition-shadow" />
+                {product.image_url && product.image_url.length > 1 && (
+                  <>
+                    <CarouselPrevious className="left-4 h-10 w-10 shadow-lg hover:shadow-xl transition-shadow" />
+                    <CarouselNext className="right-4 h-10 w-10 shadow-lg hover:shadow-xl transition-shadow" />
+                  </>
+                )}
               </Carousel>
 
-              {/* Image indicators */}
+              {/* Image Thumbnails */}
               {product.image_url && product.image_url.length > 1 && (
-                <div className="flex justify-center gap-2 mt-4">
-                  {product.image_url.map((_: any, index: number) => (
+                <div className="flex justify-center gap-2 p-4 border-t">
+                  {product.image_url.map((image: { url: string; alt: string } | null, index: number) => (
                     <div
                       key={index}
-                      className="h-1.5 w-8 rounded-full bg-muted transition-colors"
-                      aria-label={`Image ${index + 1}`}
-                    />
+                      className="relative w-16 h-16 rounded-md overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-pointer"
+                    >
+                      <Image
+                        src={image?.url || ""}
+                        alt={image?.alt || `Thumbnail ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    </div>
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
+          </div>
 
-            {/* Product Details */}
-            <div className="flex flex-col">
-              <div className="mb-4">
-                {product.category && (
-                  <Badge variant="secondary" className="mb-2">
+          {/* Product Details */}
+          <div className="flex flex-col">
+            {/* Category & Title */}
+            <div className="mb-6">
+              {product.category && (
+                <Link href={`/products?category=${encodeURIComponent(product.category)}`}>
+                  <Badge variant="secondary" className="mb-3 hover:bg-secondary/80 transition-colors cursor-pointer">
                     <Tag className="mr-1 h-3 w-3" />
                     {product.category}
                   </Badge>
-                )}
-                <h1 className="text-4xl font-bold tracking-tight mb-2 text-balance">
-                  {product.name}
-                </h1>
-                <p className="text-3xl font-bold text-primary">
+                </Link>
+              )}
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4 text-balance">
+                {product.name}
+              </h1>
+              <div className="flex items-baseline gap-3 mb-6">
+                <p className="text-4xl md:text-5xl font-bold text-primary">
                   ${product.price.toFixed(2)}
                 </p>
+                {product.stock > 0 && (
+                  <Badge variant="outline" className="text-sm">
+                    <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
+                    4.8 Rating
+                  </Badge>
+                )}
               </div>
+            </div>
 
-              <Card className="mb-6">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Package className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-semibold">Availability:</span>
+            {/* Stock Status */}
+            <Card className="mb-6 border-2">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${product.stock > 0 ? 'bg-green-100' : 'bg-destructive/10'}`}>
+                      <Package className={`h-5 w-5 ${product.stock > 0 ? 'text-green-600' : 'text-destructive'}`} />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Availability</p>
+                      {product.stock > 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          {product.stock > 10
+                            ? "In Stock - Ready to ship"
+                            : `Only ${product.stock} left in stock`}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-destructive">Out of Stock</p>
+                      )}
+                    </div>
                   </div>
-                  {product.stock > 0 ? (
+                  {product.stock > 0 && (
                     <Badge
                       variant={product.stock > 10 ? "default" : "secondary"}
                       className="text-sm"
                     >
-                      {product.stock > 10
-                        ? "In Stock"
-                        : `Only ${product.stock} left in stock`}
-                    </Badge>
-                  ) : (
-                    <Badge variant="destructive" className="text-sm">
-                      Out of Stock
+                      {product.stock > 10 ? "In Stock" : "Low Stock"}
                     </Badge>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Features */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Truck className="h-5 w-5 mx-auto mb-2 text-primary" />
+                  <p className="text-xs font-medium">Free Shipping</p>
+                  <p className="text-xs text-muted-foreground">Over $50</p>
                 </CardContent>
               </Card>
-
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-3">Description</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {product.description ||
-                    "No description available for this product."}
-                </p>
-              </div>
-
-              <div className="mt-auto flex flex-col items-stretch gap-3">
-                <Button
-                  size="lg"
-                  className={`w-full flex items-center justify-center gap-2 ${items.some(p => p.id === product.id) ? "bg-green-600 hover:bg-green-700" : ""}`}
-                  disabled={product.stock === 0}
-                  onClick={() =>
-                    handleToggleCart(
-                      product as unknown,
-                      !items.some((p) => p.id === product.id)
-                    )
-                  }
-                >
-                  <ShoppingCartIcon className="h-5 w-5 mr-1" />
-                  <span>
-                    {items.some((p) => p.id === product.id) ? "In Cart" : "Add to Cart"}
-                  </span>
-                </Button>
-                <div className="w-full flex flex-row items-center justify-between mt-1">
-                  <span className="text-xs text-muted-foreground text-center">
-                    Free shipping on orders over <span className="font-semibold">$50</span>
-                  </span>
-                  <span
-                    className={`text-xs font-medium rounded-lg px-2 py-1 inline-block
-                      ${product.stock > 0
-                        ? "bg-green-100 text-green-700"
-                        : "bg-destructive/10 text-destructive"
-                      }
-                    `}
-                  >
-                    {product.stock > 0
-                      ? (product.stock > 10 ? "In Stock" : `Only ${product.stock} left!`)
-                      : "Out of Stock"}
-                  </span>
-                </div>
-              </div>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <RotateCcw className="h-5 w-5 mx-auto mb-2 text-primary" />
+                  <p className="text-xs font-medium">Easy Returns</p>
+                  <p className="text-xs text-muted-foreground">30 Days</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Shield className="h-5 w-5 mx-auto mb-2 text-primary" />
+                  <p className="text-xs font-medium">Secure Payment</p>
+                  <p className="text-xs text-muted-foreground">Protected</p>
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Add to Cart Button */}
+            {/* Add to Cart Button */}
+            <div className="flex flex-row justify-between gap-2 mb-6">
+              <Button
+                size="lg"
+                className="w-1/2 h-10 text-sm cursor-pointer"
+                disabled={product.stock === 0}
+                onClick={() => router.push(`/checkout`)}
+              >
+                <ShoppingCartIcon className="h-5 w-5 mr-2" />
+                Checkout
+              </Button>
+              <Button
+                className={`w-1/2 h-10 text-sm cursor-pointer ${isInCart ? "bg-green-600 hover:bg-green-700" : ""}`}
+                variant="outline"
+                size="lg"
+                disabled={product.stock === 0}
+                onClick={() => handleToggleCart(product as unknown, !isInCart)}
+              >
+                <BookmarkIcon className="h-5 w-5 mr-2" />
+                {isInCart ? "In Wishlist" : "Add to Wishlist"}
+              </Button>
+            </div>
+
+            {/* Description */}
+            <Card className="mb-6">
+              <CardContent className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Product Description</h2>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {product.description || "No description available for this product."}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Additional Info */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="font-semibold mb-4">Product Information</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Category</span>
+                    <span className="font-medium">{product.category || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Stock Available</span>
+                    <span className="font-medium">{product.stock} units</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">SKU</span>
+                    <span className="font-medium">#{product.id}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </main>
-    </>
+
+        {/* Related Products Section is for products from multiple sellers */}
+        {relatedProducts.length > 0 && (
+          <section className="border-t pt-12">
+            <div className="mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Related Products</h2>
+              <p className="text-muted-foreground">
+                You might also like these {product.category} products
+              </p>
+            </div>
+            <ProductGrid products={relatedProducts.map(p => ({
+              ...p,
+              image_url: p.image_url?.[0]?.url || ""
+            }))} />
+          </section>
+        )}
+      </div>
+    </main>
   )
 }
