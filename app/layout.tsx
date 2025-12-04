@@ -1,4 +1,5 @@
 import type React from "react"
+import { Suspense } from "react"
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
@@ -83,7 +84,9 @@ export default function RootLayout({
         >
           <Providers>
             <GoogleIdentityInitializer />
-            <RouteProgress />
+            <Suspense fallback={null}>
+              <RouteProgress />
+            </Suspense>
             <Header />
             {children}
           </Providers>
