@@ -7,18 +7,7 @@
  * Initiates Google OAuth login by redirecting to backend OAuth endpoint
  */
 export const initiateGoogleLogin = () => {
-    let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8888';
-
-    // Ensure the URL has a protocol
-    if (!apiUrl.startsWith('http://') && !apiUrl.startsWith('https://')) {
-        // Default to https for production-like URLs, http for localhost
-        apiUrl = apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1')
-            ? `http://${apiUrl}`
-            : `https://${apiUrl}`;
-    }
-
-    // Remove trailing slash if present
-    apiUrl = apiUrl.replace(/\/$/, '');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
     // Redirect to backend Google OAuth endpoint
     // Backend uses Spring Security OAuth2 which has /oauth2/authorization/{provider} endpoint
