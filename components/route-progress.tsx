@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { Suspense } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 import * as ProgressPrimitive from "@radix-ui/react-progress"
 import { cn } from "@/lib/utils"
@@ -10,7 +10,7 @@ type ProgressState = {
     percent: number
 }
 
-export function RouteProgress() {
+function RouteProgressContent() {
     const pathname = usePathname()
     const searchParams = useSearchParams()
 
@@ -188,6 +188,14 @@ export function RouteProgress() {
                 />
             </ProgressPrimitive.Root>
         </div>
+    )
+}
+
+export function RouteProgress() {
+    return (
+        <Suspense fallback={null}>
+            <RouteProgressContent />
+        </Suspense>
     )
 }
 
