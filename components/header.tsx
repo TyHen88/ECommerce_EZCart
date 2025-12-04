@@ -12,8 +12,10 @@ import { useEffect, useState } from "react"
 import { ModeToggle } from "./mode-toggle"
 import { OrderDraftSheet } from "./products/OrderDraftSheet"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
+import SignUpFlowModal from "./auth/SignUpFlowMain"
 
 export function Header() {
+  const [isOpenSignUpFlow, setIsOpenSignUpFlow] = useState(false)
   const [user, setUser] = useState<UserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isOpenSettingsMenu, setIsOpenSettingsMenu] = useState(false)
@@ -86,95 +88,152 @@ export function Header() {
         {/* <div className="flex-1 flex justify-center" /> */}
 
         {/* Right navigation/actions */}
-        <nav className="flex items-center gap-3 sm:gap-4">
-          <Link href="/products" className="hidden sm:block">
-            <Button variant="ghost" tabIndex={0}>
-              Products
-            </Button>
-          </Link>
-          <Link href="/shop" className="hidden sm:block">
-            <Button variant="ghost" tabIndex={0}>
-              Shops
-            </Button>
-          </Link>
-          {userInfoData?.data?.username && (
-            <div className="text-xs text-muted-foreground flex items-center h-8 whitespace-nowrap">
-              Welcome, {userInfoData.data.username}
-            </div>
-          )}
-
-          <div className="flex items-center">
-            <History className="h-5 w-5" />
-          </div>
-          <div className="flex items-center">
-            <OrderDraftSheet />
-          </div>
-
-          <Popover open={isOpenSettingsMenu} onOpenChange={setIsOpenSettingsMenu}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Open Settings Menu"
-                className="p-2"
-                tabIndex={0}
-                type="button"
-              >
-                <Settings className="h-5 w-5" />
+        <nav className="flex items-center w-full">
+          {/* Centered navigation links and greeting */}
+          <div className="flex flex-1 items-center gap-3 sm:gap-4 justify-center">
+            <Link href="/products" className="hidden sm:block justify-center">
+              <Button variant="ghost" tabIndex={0}>
+                Products
               </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              className="w-60 min-w-[210px] px-0 py-2"
-              sideOffset={10}
-            >
-              {user ? (
-                <div className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Image
-                        src={userInfoData?.data?.profileImageUrl as string || "/profile.jpg"}
-                        alt="Profile"
-                        width={36}
-                        height={36}
-                        className="rounded-full object-cover w-9 h-9"
-                      />
-                      {userInfoData?.data?.active && (
-                        <span
-                          className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white bg-blue-500"
-                          title="Active"
+            </Link>
+            <Link href="/shop" className="hidden sm:block">
+              <Button variant="ghost" tabIndex={0}>
+                Shops
+              </Button>
+            </Link>
+            {userInfoData?.data?.username && (
+              <div className="text-xs text-muted-foreground flex items-center h-8 whitespace-nowrap">
+                Welcome, {userInfoData.data.username}
+              </div>
+            )}
+          </div>
+          {/* End aligned icons and popover */}
+          <div className="flex items-center gap-3 sm:gap-4 justify-end ml-auto">
+            <div className="flex items-center">
+              <OrderDraftSheet />
+            </div>
+            <Popover open={isOpenSettingsMenu} onOpenChange={setIsOpenSettingsMenu}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Open Settings Menu"
+                  className="p-2"
+                  tabIndex={0}
+                  type="button"
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="w-60 min-w-[210px] px-0 py-2"
+                sideOffset={10}
+              >
+                {user ? (
+                  <div className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <Image
+                          src={userInfoData?.data?.profileImageUrl as string || "/profile.jpg"}
+                          alt="Profile"
+                          width={36}
+                          height={36}
+                          className="rounded-full object-cover w-9 h-9"
                         />
-                      )}
+                        {userInfoData?.data?.active && (
+                          <span
+                            className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white bg-blue-500"
+                            title="Active"
+                          />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium truncate max-w-[110px]">
+                          {userInfoData?.data?.username || "User"}
+                        </div>
+                        <div className="text-xs truncate text-muted-foreground max-w-[110px]">
+                          {userInfoData?.data?.email as string || "N/A"}
+                        </div>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <div className="font-medium truncate max-w-[110px]">
-                        {userInfoData?.data?.username || "User"}
+
+                    <div className="mt-3 grid gap-1">
+                      <div
+                        onClick={e => {
+                          e.stopPropagation();
+                          setIsOpenSettings(true);
+                        }}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="justify-start w-full"
+                          tabIndex={0}
+                          type="button"
+                          onClick={() => router.push("/setting")}
+                        >
+                          <Settings className="mr-2 h-4 w-4" />
+                          Edit Profile / Settings
+                        </Button>
                       </div>
-                      <div className="text-xs truncate text-muted-foreground max-w-[110px]">
-                        {userInfoData?.data?.email as string || "N/A"}
+                      <Link href="/products" className="sm:hidden w-full">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="justify-start w-full"
+                          tabIndex={0}
+                        >
+                          <ShoppingBag className="mr-2 h-4 w-4" />
+                          Products
+                        </Button>
+                      </Link>
+                      {isAdmin && (
+                        <Link href="/admin" className="w-full">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="justify-start w-full"
+                            tabIndex={0}
+                          >
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            Admin
+                          </Button>
+                        </Link>
+                      )}
+                      <div
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleLogout();
+                        }}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="justify-start w-full"
+                          tabIndex={0}
+                          type="button"
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Logout
+                        </Button>
                       </div>
+
+                      <ModeToggle open={isOpenModeToggle} setOpen={setIsOpenModeToggle} />
                     </div>
                   </div>
-
-                  <div className="mt-3 grid gap-1">
-                    <div
-                      onClick={e => {
-                        e.stopPropagation();
-                        setIsOpenSettings(true);
-                      }}
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="justify-start w-full"
-                        tabIndex={0}
-                        type="button"
-                        onClick={() => router.push("/setting")}
-                      >
-                        <Settings className="mr-2 h-4 w-4" />
-                        Edit Profile / Settings
+                ) : (
+                  <div className="px-4 py-3 grid gap-2">
+                    <Link href="/auth/login" className="w-full">
+                      <Button variant="ghost" size="sm" className="justify-start w-full" tabIndex={0}>
+                        <User className="mr-2 h-4 w-4" />
+                        Login
                       </Button>
-                    </div>
+                    </Link>
+
+                    <Button variant="default" size="sm" className="justify-start w-full" tabIndex={0} onClick={() => setIsOpenSignUpFlow(true)}>
+                      Sign Up
+                    </Button>
                     <Link href="/products" className="sm:hidden w-full">
                       <Button
                         variant="ghost"
@@ -186,71 +245,14 @@ export function Header() {
                         Products
                       </Button>
                     </Link>
-                    {isAdmin && (
-                      <Link href="/admin" className="w-full">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="justify-start w-full"
-                          tabIndex={0}
-                        >
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          Admin
-                        </Button>
-                      </Link>
-                    )}
-                    <div
-                      onClick={e => {
-                        e.stopPropagation();
-                        handleLogout();
-                      }}
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="justify-start w-full"
-                        tabIndex={0}
-                        type="button"
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Logout
-                      </Button>
-                    </div>
-
-                    <ModeToggle open={isOpenModeToggle} setOpen={setIsOpenModeToggle} />
                   </div>
-                </div>
-              ) : (
-                <div className="px-4 py-3 grid gap-2">
-                  <Link href="/auth/login" className="w-full">
-                    <Button variant="ghost" size="sm" className="justify-start w-full" tabIndex={0}>
-                      <User className="mr-2 h-4 w-4" />
-                      Login
-                    </Button>
-                  </Link>
-                  <Link href="/auth/sign-up" className="w-full">
-                    <Button variant="default" size="sm" className="justify-start w-full" tabIndex={0}>
-                      Sign Up
-                    </Button>
-                  </Link>
-                  <Link href="/products" className="sm:hidden w-full">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="justify-start w-full"
-                      tabIndex={0}
-                    >
-                      <ShoppingBag className="mr-2 h-4 w-4" />
-                      Products
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </PopoverContent>
-          </Popover>
+                )}
+              </PopoverContent>
+            </Popover>
+          </div>
         </nav>
       </div>
-      {/* <SettingsDialog isOpen={isOpenSettings} setIsOpen={setIsOpenSettings} userInfo={userInfoData?.data} /> */}
+      <SignUpFlowModal isOpen={isOpenSignUpFlow} setIsOpen={setIsOpenSignUpFlow} />
     </header >
   )
 }

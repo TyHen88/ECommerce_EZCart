@@ -11,6 +11,7 @@ import { useState } from "react"
 import { initiateGoogleLogin } from "@/utils/googleOAuth"
 import { authService } from "@/service/auth.service"
 import { Separator } from "@/components/ui/separator"
+import { WhoAreYouModal } from "@/components/shared/common/whoareyou-modal"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -18,7 +19,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-
+  const [isOpenSignUpFlow, setIsOpenSignUpFlow] = useState(false)
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -138,14 +139,15 @@ export default function LoginPage() {
               </div>
               <div className="mt-4 text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <Link href="/auth/sign-up" className="underline underline-offset-4">
+                <Button variant="link" onClick={() => setIsOpenSignUpFlow(true)}>
                   Sign up
-                </Link>
+                </Button>
               </div>
             </form>
           </CardContent>
         </Card>
       </div>
+      <WhoAreYouModal isOpen={isOpenSignUpFlow} setIsOpen={setIsOpenSignUpFlow} />
     </div>
   )
 }

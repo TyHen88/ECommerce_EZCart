@@ -22,6 +22,7 @@ const nextConfig: NextConfig = {
       'images.unsplash.com',
       'www.qoltec.com',
       'dragonimage.com.au',
+      'images.domain.com.au',
     ],
   },
 }

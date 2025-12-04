@@ -2,11 +2,13 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import Script from "next/script"
 import { Providers } from "@/components/providers"
 import RouteProgress from "@/components/route-progress"
 import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 import { Header } from "@/components/header"
+import { GoogleIdentityInitializer } from "@/components/GoogleIdentityInitializer"
 
 const geist = Geist({
   subsets: ["latin"],
@@ -69,6 +71,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body className={`${geist.className} font-sans antialiased`}>
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="afterInteractive"
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -76,6 +82,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Providers>
+            <GoogleIdentityInitializer />
             <RouteProgress />
             <Header />
             {children}
