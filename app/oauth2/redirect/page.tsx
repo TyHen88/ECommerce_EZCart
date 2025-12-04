@@ -1,10 +1,10 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { toast } from "sonner"
 
-export default function OAuth2Redirect() {
+function OAuth2RedirectContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [statusState, setStatusState] = useState<"loading" | "success" | "error">("loading")
@@ -98,4 +98,18 @@ export default function OAuth2Redirect() {
     )
 }
 
-OAuth2Redirect.getLayout = (page: React.ReactElement) => page;
+OAuth2RedirectContent.getLayout = (page: React.ReactElement) => page;
+
+export default function OAuth2Redirect() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-[60vh] flex flex-col items-center justify-center w-full">
+                <div className="flex flex-col items-center justify-center gap-6 w-full h-full">
+                    <h1 className="text-2xl font-bold">Loading...</h1>
+                </div>
+            </div>
+        }>
+            <OAuth2RedirectContent />
+        </Suspense>
+    )
+}
