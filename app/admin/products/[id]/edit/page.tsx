@@ -38,6 +38,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         </div>
 
         <ProductForm product={product} />
+        </div>
       </main>
     </div>
   )

@@ -28,6 +28,7 @@ export default async function NewProductPage() {
         </div>
 
         <ProductForm />
+        </div>
       </main>
     </div>
   )
