@@ -11,10 +11,23 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   // For demo purposes, we'll assume user is always admin
   // In a real app, you'd check authentication here
 
-  const product = getProductById(id)
+  const dataProduct = getProductById(id)
 
-  if (!product) {
+  if (!dataProduct) {
     notFound()
+  }
+
+  // Transform product to match ProductForm expected format
+  const product = {
+    id: dataProduct.id,
+    name: dataProduct.name,
+    description: dataProduct.description || null,
+    price: dataProduct.price,
+    image_url: Array.isArray(dataProduct.image_url) && dataProduct.image_url.length > 0
+      ? dataProduct.image_url[0].url
+      : null,
+    stock: dataProduct.stock,
+    category: dataProduct.category || null,
   }
 
   return (
