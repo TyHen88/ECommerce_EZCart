@@ -4,12 +4,24 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import Link from "next/link"
 import { getProducts } from "@/lib/data"
-import type { Product } from "@/lib/types"
 
 export default async function AdminPage() {
   // For demo purposes, we'll assume user is always admin
   // In a real app, you'd check authentication here
-  const products: Product[] = await getProducts()
+  const dataProducts = await getProducts()
+
+  // Transform products to match AdminProductList expected format
+  const products = dataProducts.map((product) => ({
+    id: product.id,
+    name: product.name,
+    description: product.description || null,
+    price: product.price,
+    image_url: Array.isArray(product.image_url) && product.image_url.length > 0
+      ? product.image_url[0].url
+      : null,
+    stock: product.stock,
+    category: product.category || null,
+  }))
 
   return (
     <div className="min-h-screen bg-background">
