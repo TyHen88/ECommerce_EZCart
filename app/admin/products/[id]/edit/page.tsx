@@ -3,7 +3,14 @@ import { ProductForm } from "@/components/product-form"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { getProductById } from "@/lib/data"
+import { getProductById, getProducts } from "@/lib/data"
+
+export async function generateStaticParams() {
+  const products = getProducts()
+  return products.map((product) => ({
+    id: product.id,
+  }))
+}
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -45,12 +52,12 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
       <main className="w-full max-w-full py-8 px-4 md:px-6 flex justify-center">
         <div className="w-full max-w-2xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">Edit Product</h1>
-          <p className="text-muted-foreground">Update product details</p>
-        </div>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold tracking-tight">Edit Product</h1>
+            <p className="text-muted-foreground">Update product details</p>
+          </div>
 
-        <ProductForm product={product} />
+          <ProductForm product={product} />
         </div>
       </main>
     </div>

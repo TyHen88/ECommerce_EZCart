@@ -1,6 +1,6 @@
 
 import { ShopProductGrid } from "@/components/persona-shop/shop-product-grid"
-import { getCategories, getProductsByShop, getShopByName } from "@/lib/data"
+import { getCategories, getProductsByShop, getShopByName, shops } from "@/lib/data"
 import { notFound } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { MapPin, Store, Star, Package, Award, CheckCircle2, Clock, Users, ArrowLeft } from "lucide-react"
@@ -8,6 +8,12 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { SellerProductFilters } from "@/components/persona-shop/sellerproduct-filters"
 import { Badge } from "@/components/ui/badge"
+
+export async function generateStaticParams() {
+    return shops.map((shop) => ({
+        shop_slug: shop.shopName.toLowerCase().replace(/\s+/g, '-'),
+    }))
+}
 
 export default async function ShopPage({
     params,
