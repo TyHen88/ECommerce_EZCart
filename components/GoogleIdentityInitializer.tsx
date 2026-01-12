@@ -128,7 +128,18 @@ export function GoogleIdentityInitializer() {
                     description: "Welcome back!",
                 })
 
-                setTimeout(() => window.location.reload(), RELOAD_DELAY)
+                // Trigger session ready event for profile fetch
+                if (typeof window !== "undefined") {
+                    window.dispatchEvent(
+                        new CustomEvent("sessionReady", { detail: { token: data.token } })
+                    );
+                }
+
+                // Wait a moment for storage and events to be processed
+                await new Promise(resolve => setTimeout(resolve, 300))
+
+                // Use full page navigation to ensure session is available and profile is fetched
+                window.location.href = "/products"
             } catch (err: any) {
                 if (loadingToast) {
                     toast.dismiss(loadingToast)

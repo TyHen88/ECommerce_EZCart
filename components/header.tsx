@@ -1,75 +1,83 @@
-"use client"
+"use client";
 
-import { SettingsDialog } from "@/components/profile-settings/SettingDialog"
-import { Button } from "@/components/ui/button"
-import useFetchProfile from "@/hooks/useFetchProfile"
-import { UserInfo } from "@/lib/types"
-import { History, LayoutDashboard, LogOut, Settings, ShoppingBag, User } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { ModeToggle } from "./mode-toggle"
-import { OrderDraftSheet } from "./products/OrderDraftSheet"
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
-import SignUpFlowModal from "./auth/SignUpFlowMain"
+import { SettingsDialog } from "@/components/profile-settings/SettingDialog";
+import { Button } from "@/components/ui/button";
+import useFetchProfile from "@/hooks/useFetchProfile";
+import { UserInfo } from "@/lib/types";
+import {
+  History,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  ShoppingBag,
+  User,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { performLogout } from "@/utils/auth";
+import { ModeToggle } from "./mode-toggle";
+import { OrderDraftSheet } from "./products/OrderDraftSheet";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import SignUpFlowModal from "./auth/SignUpFlowMain";
 
 export function Header() {
-  const [isOpenSignUpFlow, setIsOpenSignUpFlow] = useState(false)
-  const [user, setUser] = useState<UserInfo | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isOpenSettingsMenu, setIsOpenSettingsMenu] = useState(false)
-  const [isOpenSettings, setIsOpenSettings] = useState(false)
-  const { data: userInfoData, isError, error, refetch, isFetching } = useFetchProfile()
-  const [isOpenModeToggle, setIsOpenModeToggle] = useState(false)
+  const [isOpenSignUpFlow, setIsOpenSignUpFlow] = useState(false);
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isOpenSettingsMenu, setIsOpenSettingsMenu] = useState(false);
+  const [isOpenSettings, setIsOpenSettings] = useState(false);
+  const {
+    data: userInfoData,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useFetchProfile();
+  const [isOpenModeToggle, setIsOpenModeToggle] = useState(false);
   const router = useRouter();
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem('authToken') : null
-    const userInfoStr = typeof window !== "undefined" ? localStorage.getItem('userInfo') : null
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+    const userInfoStr =
+      typeof window !== "undefined" ? localStorage.getItem("userInfo") : null;
 
     if (token && userInfoStr) {
       try {
-        const userInfo = JSON.parse(userInfoStr)
-        setUser(userInfo)
+        const userInfo = JSON.parse(userInfoStr);
+        setUser(userInfo);
       } catch (error) {
-        console.error('Error parsing user info:', error)
+        console.error("Error parsing user info:", error);
       }
     }
-    setIsLoading(false)
-  }, [])
+    setIsLoading(false);
+  }, []);
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem('authToken') : null
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
     if (token && !user) {
-      refetch()
+      refetch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refetch])
+  }, [refetch]);
 
   useEffect(() => {
     if (userInfoData && !user) {
-      setUser(userInfoData as UserInfo)
+      setUser(userInfoData as UserInfo);
       if (typeof window !== "undefined") {
-        localStorage.setItem('userInfo', JSON.stringify(userInfoData))
+        localStorage.setItem("userInfo", JSON.stringify(userInfoData));
       }
     }
-  }, [userInfoData, user])
+  }, [userInfoData, user]);
 
-  const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('tokenType')
-      localStorage.removeItem('userInfo')
-    }
-    setUser(null)
-    if (window?.location) {
-      window.location.href = '/'
-    } else {
-      router.push("/")
-    }
-  }
+  const handleLogout = useCallback(async () => {
+    setUser(null);
+    await performLogout("/");
+  }, []);
 
-  const isAdmin = userInfoData?.data?.role === "admin"
+  const isAdmin = userInfoData?.data?.role === "admin";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -77,7 +85,13 @@ export function Header() {
         {/* Left (Logo/brand) */}
         <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2 min-w-0">
-            <Image src="/easycarts-128x128.png" alt="EZ-Carts.com" width={32} height={32} className="shrink-0" />
+            <Image
+              src="/easycarts-128x128.png"
+              alt="EZ-Carts.com"
+              width={32}
+              height={32}
+              className="shrink-0"
+            />
             <span className="font-bold text-xl truncate max-w-[120px] sm:max-w-none">
               EZ-Carts.com
             </span>
@@ -112,7 +126,10 @@ export function Header() {
             <div className="flex items-center">
               <OrderDraftSheet />
             </div>
-            <Popover open={isOpenSettingsMenu} onOpenChange={setIsOpenSettingsMenu}>
+            <Popover
+              open={isOpenSettingsMenu}
+              onOpenChange={setIsOpenSettingsMenu}
+            >
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
@@ -135,7 +152,10 @@ export function Header() {
                     <div className="flex items-center gap-3">
                       <div className="relative">
                         <Image
-                          src={userInfoData?.data?.profileImageUrl as string || "/profile.jpg"}
+                          src={
+                            (userInfoData?.data?.profileImageUrl as string) ||
+                            "/profile.jpg"
+                          }
                           alt="Profile"
                           width={36}
                           height={36}
@@ -153,14 +173,14 @@ export function Header() {
                           {userInfoData?.data?.username || "User"}
                         </div>
                         <div className="text-xs truncate text-muted-foreground max-w-[110px]">
-                          {userInfoData?.data?.email as string || "N/A"}
+                          {(userInfoData?.data?.email as string) || "N/A"}
                         </div>
                       </div>
                     </div>
 
                     <div className="mt-3 grid gap-1">
                       <div
-                        onClick={e => {
+                        onClick={(e) => {
                           e.stopPropagation();
                           setIsOpenSettings(true);
                         }}
@@ -202,7 +222,7 @@ export function Header() {
                         </Link>
                       )}
                       <div
-                        onClick={e => {
+                        onClick={(e) => {
                           e.stopPropagation();
                           handleLogout();
                         }}
@@ -219,19 +239,33 @@ export function Header() {
                         </Button>
                       </div>
 
-                      <ModeToggle open={isOpenModeToggle} setOpen={setIsOpenModeToggle} />
+                      <ModeToggle
+                        open={isOpenModeToggle}
+                        setOpen={setIsOpenModeToggle}
+                      />
                     </div>
                   </div>
                 ) : (
                   <div className="px-4 py-3 grid gap-2">
                     <Link href="/auth/login" className="w-full">
-                      <Button variant="ghost" size="sm" className="justify-start w-full" tabIndex={0}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="justify-start w-full"
+                        tabIndex={0}
+                      >
                         <User className="mr-2 h-4 w-4" />
                         Login
                       </Button>
                     </Link>
 
-                    <Button variant="default" size="sm" className="justify-start w-full" tabIndex={0} onClick={() => setIsOpenSignUpFlow(true)}>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="justify-start w-full"
+                      tabIndex={0}
+                      onClick={() => setIsOpenSignUpFlow(true)}
+                    >
                       Sign Up
                     </Button>
                     <Link href="/products" className="sm:hidden w-full">
@@ -252,7 +286,10 @@ export function Header() {
           </div>
         </nav>
       </div>
-      <SignUpFlowModal isOpen={isOpenSignUpFlow} setIsOpen={setIsOpenSignUpFlow} />
-    </header >
-  )
+      <SignUpFlowModal
+        isOpen={isOpenSignUpFlow}
+        setIsOpen={setIsOpenSignUpFlow}
+      />
+    </header>
+  );
 }

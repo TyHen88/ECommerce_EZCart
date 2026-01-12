@@ -1,81 +1,128 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { initiateGoogleLogin } from "@/utils/googleOAuth"
-import { authService } from "@/service/auth.service"
-import { Separator } from "@/components/ui/separator"
-import { WhoAreYouModal } from "@/components/shared/common/whoareyou-modal"
+import { WhoAreYouModal } from "@/components/shared/common/whoareyou-modal";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { initiateGoogleLogin } from "@/utils/googleOAuth";
+import { signIn, getSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import type React from "react";
+import { useState, useCallback, Suspense } from "react";
+import { toast } from "sonner";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
-  const [isOpenSignUpFlow, setIsOpenSignUpFlow] = useState(false)
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+function LoginPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [user_name, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isOpenSignUpFlow, setIsOpenSignUpFlow] = useState(false);
 
-    try {
-      // Use the backend auth service
-      const response = await authService.login(email, password)
+  const handleLogin = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsLoading(true);
+      setError(null);
 
-      if (response.data?.token) {
-        // Store the token
-        localStorage.setItem('authToken', response.data.token)
-        localStorage.setItem('tokenType', 'Bearer')
+      try {
+        const result = await signIn("credentials", {
+          user_name: user_name.trim(),
+          password: password,
+          redirect: false,
+        });
 
-        // Store user info if available
-        if (response.data.user) {
-          localStorage.setItem('userInfo', JSON.stringify(response.data.user))
+        if (result?.error) {
+          setError("Invalid username or password");
+          toast.error("Login failed. Please check your credentials.");
+          if (process.env.NODE_ENV === "development") {
+            console.error("Login error:", result.error);
+          }
+        } else if (result?.ok) {
+          toast.success("Login successful");
+
+          // Wait for session to be established and refresh it
+          try {
+            // Wait a moment for the session to be created
+            await new Promise((resolve) => setTimeout(resolve, 300));
+
+            // Force session refresh to ensure it's available
+            const session = await getSession();
+
+            if (session?.accessToken) {
+              // Get callback URL from query params or default to /products
+              const callbackUrl =
+                searchParams.get("callbackUrl") || "/products";
+
+              // Use window.location for a full page reload to ensure session is available
+              window.location.href = callbackUrl;
+            } else {
+              // Fallback: use router if session not immediately available
+              const callbackUrl =
+                searchParams.get("callbackUrl") || "/products";
+              router.push(callbackUrl);
+              router.refresh();
+            }
+          } catch (sessionError) {
+            // Fallback: redirect anyway
+            const callbackUrl = searchParams.get("callbackUrl") || "/products";
+            router.push(callbackUrl);
+            router.refresh();
+          }
+        } else {
+          setError("Login failed. Please try again.");
+          toast.error("Login failed. Please try again.");
         }
-
-        router.push("/products")
-        router.refresh()
-      } else {
-        setError("Login failed. Please check your credentials.")
+      } catch (error) {
+        setError("An unexpected error occurred. Please try again.");
+        toast.error("Login failed. Please try again.");
+        if (process.env.NODE_ENV === "development") {
+          console.error("Login error:", error);
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error: any) {
-      console.error("Login error:", error)
-      setError(error.response?.data?.message || "Login failed. Please try again.")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    },
+    [user_name, password, router]
+  );
 
-  const handleGoogleLogin = () => {
-    initiateGoogleLogin()
-  }
+  const handleGoogleLogin = useCallback(() => {
+    initiateGoogleLogin();
+  }, []);
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Welcome back!</CardTitle>
-            <CardDescription className="text-center">Enter your email below to login to your account</CardDescription>
+            <CardTitle className="text-2xl text-center">
+              Welcome back!
+            </CardTitle>
+            <CardDescription className="text-center">
+              Enter your username below to login to your account
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
+                    id="username"
+                    type="username"
+                    placeholder="username"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={user_name}
+                    onChange={(e) => setUsername(e.target.value)}
                     disabled={isLoading}
                   />
                 </div>
@@ -92,9 +139,7 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <div className="text-sm text-destructive">
-                    {error}
-                  </div>
+                  <div className="text-sm text-destructive">{error}</div>
                 )}
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
@@ -104,7 +149,9 @@ export default function LoginPage() {
 
               <div className="flex items-center gap-2 justify-center w-full mt-6 mb-2">
                 <Separator className="inline-block flex-1" />
-                <span className="inline-block text-muted-foreground text-sm px-2">or</span>
+                <span className="inline-block text-muted-foreground text-sm px-2">
+                  or
+                </span>
                 <Separator className="inline-block flex-1" />
               </div>
               {/* Google OAuth2 */}
@@ -139,7 +186,10 @@ export default function LoginPage() {
               </div>
               <div className="mt-4 text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <Button variant="link" onClick={() => setIsOpenSignUpFlow(true)}>
+                <Button
+                  variant="link"
+                  onClick={() => setIsOpenSignUpFlow(true)}
+                >
                   Sign up
                 </Button>
               </div>
@@ -147,7 +197,26 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
-      <WhoAreYouModal isOpen={isOpenSignUpFlow} setIsOpen={setIsOpenSignUpFlow} />
+      <WhoAreYouModal
+        isOpen={isOpenSignUpFlow}
+        setIsOpen={setIsOpenSignUpFlow}
+      />
     </div>
-  )
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-svh w-full items-center justify-center">
+          <div className="text-center">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
+  );
 }
