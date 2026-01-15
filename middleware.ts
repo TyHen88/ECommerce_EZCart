@@ -8,21 +8,6 @@ import {
   isPublicRoute,
 } from "@/lib/routes";
 
-/**
- * Middleware for route protection and authentication
- *
- * Protected routes:
- * - /admin/* - Requires admin role
- * - /setting - Requires authentication
- * - /checkout - Requires authentication
- *
- * Public routes:
- * - /auth/* - Redirects to /products if already authenticated
- * - /api/auth/* - NextAuth API routes (always public)
- * - /api/* - Other API routes (check individually)
- * - /, /products, /shop, /blog, /about, /contact - Public pages
- */
-
 export default withAuth(
   async function middleware(req) {
     const token = (req as any).nextauth?.token;
@@ -99,7 +84,7 @@ export default withAuth(
           return true;
         }
 
-        // Allow public routes
+        // Allow public routes (including shop routes for all users)
         if (isPublicRoute(pathname)) {
           return true;
         }
@@ -114,11 +99,11 @@ export default withAuth(
 
         // Check protected routes
         if (isProtectedRoute(pathname)) {
-          // Must be authenticated
+          // Must be authenticated (any role including user, seller, admin)
           return !!token;
         }
 
-        // Default: allow access
+        // Default: allow access for any other routes
         return true;
       },
     },

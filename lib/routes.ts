@@ -4,21 +4,13 @@
  */
 
 // Routes that require authentication (any logged-in user)
-export const PROTECTED_ROUTES = [
-  "/setting",
-  "/checkout",
-] as const;
+export const PROTECTED_ROUTES = ["/setting", "/checkout"] as const;
 
 // Routes that require admin role
-export const ADMIN_ROUTES = [
-  "/admin",
-] as const;
+export const ADMIN_ROUTES = ["/admin"] as const;
 
 // Routes that should redirect authenticated users (auth pages)
-export const AUTH_ROUTES = [
-  "/auth/login",
-  "/auth/sign-up",
-] as const;
+export const AUTH_ROUTES = ["/auth/login", "/auth/sign-up"] as const;
 
 // Public routes that don't require authentication
 export const PUBLIC_ROUTES = [
@@ -34,9 +26,7 @@ export const PUBLIC_ROUTES = [
 ] as const;
 
 // Public API routes that don't need authentication
-export const PUBLIC_API_ROUTES = [
-  "/api/auth",
-] as const;
+export const PUBLIC_API_ROUTES = ["/api/auth"] as const;
 
 /**
  * Check if a pathname matches any of the given routes

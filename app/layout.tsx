@@ -104,8 +104,10 @@ export default async function RootLayout({
           <Providers session={session}>
             <GoogleIdentityInitializer />
             <RouteProgress />
-            <Header />
-            {children}
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-1">{children}</main>
+            </div>
           </Providers>
         </ThemeProvider>
         <Analytics />
