@@ -8,7 +8,7 @@ import type { Session } from "next-auth";
 
 // Component to sync session accessToken to localStorage and trigger profile refresh
 function SessionTokenSync() {
-  const { data: session, update: updateSession } = useSession({
+  const { data: session, status, update: updateSession } = useSession({
     required: false,
   });
   const prevTokenRef = React.useRef<string | undefined>(undefined);
@@ -17,18 +17,20 @@ function SessionTokenSync() {
     const currentToken = session?.accessToken;
 
     // Only update localStorage if token actually changed
-    if (currentToken && currentToken !== prevTokenRef.current) {
-      localStorage.setItem("authToken", currentToken);
-      localStorage.setItem("tokenType", "Bearer");
-      prevTokenRef.current = currentToken;
+    if (status === "authenticated" && currentToken) {
+      if (currentToken !== prevTokenRef.current) {
+        localStorage.setItem("authToken", currentToken);
+        localStorage.setItem("tokenType", "Bearer");
+        prevTokenRef.current = currentToken;
 
-      // Trigger a custom event to notify components that session is ready
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("sessionReady", { detail: { token: currentToken } })
-        );
+        // Trigger a custom event to notify components that session is ready
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("sessionReady", { detail: { token: currentToken } })
+          );
+        }
       }
-    } else if (!session && prevTokenRef.current) {
+    } else if (status === "unauthenticated" && prevTokenRef.current) {
       // Clear token if session is null and we had a token before
       localStorage.removeItem("authToken");
       localStorage.removeItem("tokenType");
@@ -39,7 +41,7 @@ function SessionTokenSync() {
         window.dispatchEvent(new CustomEvent("sessionCleared"));
       }
     }
-  }, [session?.accessToken, session]);
+  }, [session?.accessToken, status]);
 
   // Refresh session periodically to keep it up to date
   React.useEffect(() => {

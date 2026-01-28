@@ -52,30 +52,23 @@ function LoginPageContent() {
 
           // Wait for session to be established and refresh it
           try {
-            // Wait a moment for the session to be created
-            await new Promise((resolve) => setTimeout(resolve, 300));
+            const callbackUrl = searchParams.get("callbackUrl") || "/products";
 
-            // Force session refresh to ensure it's available
-            const session = await getSession();
-
-            if (session?.accessToken) {
-              // Get callback URL from query params or default to /products
-              const callbackUrl =
-                searchParams.get("callbackUrl") || "/products";
-
-              // Use window.location for a full page reload to ensure session is available
-              window.location.href = callbackUrl;
-            } else {
-              // Fallback: use router if session not immediately available
-              const callbackUrl =
-                searchParams.get("callbackUrl") || "/products";
-              router.push(callbackUrl);
-              router.refresh();
+            // Poll session briefly to ensure accessToken is attached before redirect
+            let session = await getSession();
+            let attempts = 0;
+            while (!session?.accessToken && attempts < 8) {
+              await new Promise((resolve) => setTimeout(resolve, 200));
+              session = await getSession();
+              attempts += 1;
             }
+
+            router.replace(callbackUrl);
+            router.refresh();
           } catch (sessionError) {
             // Fallback: redirect anyway
             const callbackUrl = searchParams.get("callbackUrl") || "/products";
-            router.push(callbackUrl);
+            router.replace(callbackUrl);
             router.refresh();
           }
         } else {
@@ -92,7 +85,7 @@ function LoginPageContent() {
         setIsLoading(false);
       }
     },
-    [user_name, password, router]
+    [user_name, password, router, searchParams]
   );
 
   const handleGoogleLogin = useCallback(() => {

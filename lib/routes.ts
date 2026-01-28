@@ -26,7 +26,7 @@ export const PUBLIC_ROUTES = [
 ] as const;
 
 // Public API routes that don't need authentication
-export const PUBLIC_API_ROUTES = ["/api/auth"] as const;
+export const PUBLIC_API_ROUTES = ["/api/auth", "/api/payway"] as const;
 
 /**
  * Check if a pathname matches any of the given routes

@@ -82,35 +82,57 @@ export const authOptions: NextAuthOptions = {
           authRequest.password
         );
 
-        const responseData = response.data?.data || response.data;
+        const responseData = response.data?.data || response.data || {};
         const apiAccessToken =
-          responseData?.access_token || responseData?.token;
+          responseData?.access_token ||
+          responseData?.accessToken ||
+          responseData?.token ||
+          responseData?.jwt;
 
         if (!apiAccessToken || typeof apiAccessToken !== "string") return null;
 
+        const userFromResponse =
+          responseData?.user || responseData?.userInfo || null;
+
         // Decode JWT payload to extract user info (id, username, role, email...)
-        let payload: any;
+        let payload: any = null;
         try {
           const [, payloadB64] = apiAccessToken.split(".");
+          const normalized = payloadB64
+            ?.replace(/-/g, "+")
+            ?.replace(/_/g, "/");
           payload = JSON.parse(
-            Buffer.from(payloadB64, "base64").toString("utf8")
+            Buffer.from(normalized, "base64").toString("utf8")
           );
         } catch {
-          return null;
+          // If token is not a JWT, we can still try to use user info from response
+          payload = null;
         }
 
-        const id = String(payload.id ?? "").trim();
+        const id = String(
+          userFromResponse?.id ??
+            payload?.id ??
+            payload?.userId ??
+            payload?.sub ??
+            ""
+        ).trim();
         if (!id) return null;
 
         const name =
+          userFromResponse?.username ||
+          userFromResponse?.name ||
           payload.username ||
           payload.sub ||
           payload.user_name ||
           payload.name ||
           null;
 
-        const email = payload.email || payload.userEmail || null;
-        const role = payload.role || null;
+        const email =
+          userFromResponse?.email ||
+          payload?.email ||
+          payload?.userEmail ||
+          null;
+        const role = userFromResponse?.role || payload?.role || null;
 
         // ✅ Return a clean NextAuth user object
         return {
@@ -140,14 +162,18 @@ export const authOptions: NextAuthOptions = {
 
       // --- Credentials login (first time only) ---
       if (user) {
-        token.sub = user.id; // ✅ IMPORTANT
+        token.sub = user.id || token.sub; // ✅ IMPORTANT
         token.user = {
+          ...(token.user || {}),
           id: user.id,
-          name: user.name ?? null,
-          email: user.email ?? null,
-          role: (user as any).role ?? null,
+          name: user.name ?? token.user?.name ?? null,
+          email: user.email ?? token.user?.email ?? null,
+          role: (user as any).role ?? token.user?.role ?? null,
         };
-        token.accessToken = (user as any).accessToken; // ✅ from authorize()
+        const userAccessToken = (user as any).accessToken;
+        if (userAccessToken) {
+          token.accessToken = userAccessToken; // ✅ from authorize()
+        }
       }
 
       // ✅ Preserve existing accessToken on subsequent calls
@@ -159,15 +185,18 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       // ✅ Always construct session.user from token
       const id = token.sub || token.user?.id;
-      session.user = {
-        id: String(id ?? ""),
-        name: token.user?.name ?? session.user?.name ?? null,
-        email: token.user?.email ?? session.user?.email ?? null,
-        image: session.user?.image ?? null,
-        role: token.user?.role ?? null,
-      };
+      if (id) {
+        session.user = {
+          id: String(id),
+          name: token.user?.name ?? session.user?.name ?? null,
+          email: token.user?.email ?? session.user?.email ?? null,
+          image: session.user?.image ?? null,
+          role: token.user?.role ?? null,
+        };
+      }
 
-      session.accessToken = token.accessToken;
+      session.accessToken =
+        token.accessToken || (token.user as any)?.accessToken;
       session.idToken = token.idToken;
 
       return session;

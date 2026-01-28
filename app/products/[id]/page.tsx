@@ -17,8 +17,9 @@ import { ArrowLeft, BookmarkIcon, CheckIcon, Package, RotateCcw, Shield, Shoppin
 import Image from "next/image"
 import Link from "next/link"
 import { notFound, useParams, useRouter } from "next/navigation"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
+import { paywaysService } from "@/service/payways.service"
 
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>()
@@ -26,6 +27,29 @@ export default function ProductDetailPage() {
   const product = id ? getProductById(id) : null
   const { addItem, removeItem, items } = useCartStore();
   const router = useRouter()
+  const [isPaywayLoading, setIsPaywayLoading] = useState(false)
+  const [isPaywayQrLoading, setIsPaywayQrLoading] = useState(false)
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false)
+  const [qrModalData, setQrModalData] = useState<{
+    imgSrc?: string
+    qrString?: string
+    qrUrl?: string
+    deeplink?: string
+    appStore?: string
+    playStore?: string
+  } | null>(null)
+
+  const openQrModal = (data: {
+    imgSrc?: string
+    qrString?: string
+    qrUrl?: string
+    deeplink?: string
+    appStore?: string
+    playStore?: string
+  }) => {
+    setQrModalData(data)
+    setIsQrModalOpen(true)
+  }
   // Get related products (same category, excluding current product)
   const relatedProducts = useMemo(() => {
     if (!product) return []
@@ -77,10 +101,338 @@ export default function ProductDetailPage() {
     }
   }, [])
 
+  const testPayWay = async () => {
+    if (!product) return
+    setIsPaywayLoading(true)
+
+    try {
+      const payload = {
+        firstname: "John",
+        lastname: "Doe",
+        email: "john@example.com",
+        phone: "012345678",
+        type: "purchase",
+        payment_option: "abapay_khqr",
+        items: [
+          {
+            name: product.name,
+            quantity: 1,
+            price: product.price.toFixed(2),
+          },
+        ],
+        shipping: "0",
+        amount: 10,
+        currency: "USD",
+      }
+
+      const response = await paywaysService.payway(payload)
+      const data = response?.data
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("Payway response:", response)
+      }
+
+      if (response.status >= 400) {
+        const message =
+          data?.message || data?.paywayBody || data?.error || "Payway failed"
+        toast.error(message)
+        return
+      }
+
+      const checkoutUrl = data?.checkoutUrl
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl
+        return
+      }
+
+      const qrUrl =
+        data?.data?.checkout_qr_url ||
+        data?.checkout_qr_url ||
+        data?.data?.qr_image_url ||
+        data?.qr_image_url
+
+      const qrImage =
+        data?.data?.qr_image ||
+        data?.qr_image ||
+        data?.qrImage ||
+        data?.data?.qrImage
+
+      const qrString =
+        data?.data?.qr_string ||
+        data?.qr_string ||
+        data?.qrString ||
+        data?.data?.qrString
+
+      const deeplink = data?.abapay_deeplink || data?.data?.abapay_deeplink
+      const appStore = data?.app_store || data?.data?.app_store
+      const playStore = data?.play_store || data?.data?.play_store
+
+      if (qrUrl) {
+        openQrModal({
+          qrUrl,
+          deeplink,
+          appStore,
+          playStore,
+        })
+        toast.success("QR generated")
+        return
+      }
+
+      if (typeof qrImage === "string" && qrImage.length > 0) {
+        const isDataUrl = qrImage.startsWith("data:")
+        const imgSrc = isDataUrl
+          ? qrImage
+          : `data:image/png;base64,${qrImage}`
+        openQrModal({
+          imgSrc,
+          deeplink,
+          appStore,
+          playStore,
+        })
+        toast.success("QR generated")
+        return
+      }
+
+      if (typeof qrString === "string" && qrString.length > 0) {
+        openQrModal({
+          qrString,
+          deeplink,
+          appStore,
+          playStore,
+        })
+        toast.success("QR generated")
+        return
+      }
+
+      const html = data?.paywayHtml
+      if (html) {
+        try {
+          sessionStorage.setItem("payway_html", html)
+          router.push("/payway/view")
+        } catch {
+          toast.error("Unable to open PayWay checkout.")
+        }
+        return
+      }
+
+      toast.error("Payway returned no checkout URL")
+    } catch (error: any) {
+      const message =
+        error?.message ||
+        error?.response?.data?.message ||
+        "Payway test failed"
+      toast.error(message)
+      if (process.env.NODE_ENV === "development") {
+        console.error("Payway test error:", error)
+      }
+    } finally {
+      setIsPaywayLoading(false)
+    }
+  }
+
+  const testPayWayQr = async () => {
+    if (!product) return
+    setIsPaywayQrLoading(true)
+
+    try {
+      const payload = {
+        first_name: "ABA",
+        last_name: "Bank",
+        email: "aba.bank@gmail.com",
+        phone: "012345678",
+        amount: Number(product.price.toFixed(2)),
+        purchase_type: "purchase",
+        payment_option: "abapay_khqr",
+        items:
+          typeof window !== "undefined"
+            ? btoa(
+              unescape(
+                encodeURIComponent(
+                  JSON.stringify([
+                    {
+                      name: product.name,
+                      quantity: 1,
+                      price: product.price.toFixed(2),
+                    },
+                  ])
+                )
+              )
+            )
+            : Buffer.from(
+              JSON.stringify([
+                {
+                  name: product.name,
+                  quantity: 1,
+                  price: product.price.toFixed(2),
+                },
+              ])
+            ).toString("base64"),
+        currency: "USD",
+        callback_url: "https://api.callback.com/notify",
+        lifetime: 6,
+        qr_image_template: "template3_color",
+      }
+
+      const response = await paywaysService.generateQr(payload)
+      const data = response?.data
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("Payway QR response:", response)
+      }
+
+      if (response.status >= 400) {
+        const message =
+          data?.message || data?.paywayBody || data?.error || "Payway QR failed"
+        toast.error(message)
+        return
+      }
+
+      const qrUrl =
+        data?.data?.checkout_qr_url ||
+        data?.checkout_qr_url ||
+        data?.data?.qr_image_url ||
+        data?.qr_image_url
+
+      const qrImage =
+        data?.data?.qr_image ||
+        data?.qr_image ||
+        data?.qrImage ||
+        data?.data?.qrImage
+
+      const qrString =
+        data?.data?.qr_string ||
+        data?.qr_string ||
+        data?.qrString ||
+        data?.data?.qrString
+
+      const deeplink = data?.abapay_deeplink || data?.data?.abapay_deeplink
+      const appStore = data?.app_store || data?.data?.app_store
+      const playStore = data?.play_store || data?.data?.play_store
+
+      if (qrUrl) {
+        openQrModal({
+          qrUrl,
+          deeplink,
+          appStore,
+          playStore,
+        })
+        toast.success("QR generated")
+        return
+      }
+
+      if (typeof qrImage === "string" && qrImage.length > 0) {
+        const isDataUrl = qrImage.startsWith("data:")
+        const imgSrc = isDataUrl
+          ? qrImage
+          : `data:image/png;base64,${qrImage}`
+        openQrModal({
+          imgSrc,
+          deeplink,
+          appStore,
+          playStore,
+        })
+        toast.success("QR generated")
+        return
+      }
+
+      if (typeof qrString === "string" && qrString.length > 0) {
+        openQrModal({
+          qrString,
+          deeplink,
+          appStore,
+          playStore,
+        })
+        toast.success("QR generated")
+        return
+      }
+
+      toast.error("Payway QR returned no image")
+    } catch (error: any) {
+      const message =
+        error?.message || error?.response?.data?.message || "Payway QR failed"
+      toast.error(message)
+      if (process.env.NODE_ENV === "development") {
+        console.error("Payway QR error:", error)
+      }
+    } finally {
+      setIsPaywayQrLoading(false)
+    }
+  }
+
   const isInCart = items.some(p => p.id === product.id)
 
   return (
     <main className="min-h-screen bg-background w-full">
+      {isQrModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-background shadow-xl border p-6 relative">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">PayWay QR</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsQrModalOpen(false)}
+                aria-label="Close QR modal"
+              >
+                <XIcon className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {qrModalData?.imgSrc && (
+              <div className="flex justify-center">
+                <img
+                  src={qrModalData.imgSrc}
+                  alt="PayWay QR"
+                  className="max-w-full h-auto rounded-md border"
+                />
+              </div>
+            )}
+
+            {qrModalData?.qrUrl && (
+              <div className="mt-4">
+                <Button
+                  className="w-full"
+                  onClick={() => window.open(qrModalData.qrUrl, "_blank")}
+                >
+                  Open QR URL
+                </Button>
+              </div>
+            )}
+
+            {qrModalData?.qrString && (
+              <div className="mt-4 text-xs break-all font-mono bg-muted/50 p-3 rounded">
+                {qrModalData.qrString}
+              </div>
+            )}
+
+            {(qrModalData?.deeplink ||
+              qrModalData?.appStore ||
+              qrModalData?.playStore) && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {qrModalData?.deeplink && (
+                    <Button asChild variant="secondary">
+                      <a href={qrModalData.deeplink}>Open ABA App</a>
+                    </Button>
+                  )}
+                  {qrModalData?.appStore && (
+                    <Button asChild variant="outline">
+                      <a href={qrModalData.appStore} target="_blank">
+                        App Store
+                      </a>
+                    </Button>
+                  )}
+                  {qrModalData?.playStore && (
+                    <Button asChild variant="outline">
+                      <a href={qrModalData.playStore} target="_blank">
+                        Play Store
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              )}
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <Link href="/products">
@@ -251,6 +603,28 @@ export default function ProductDetailPage() {
                 {isInCart ? "In Wishlist" : "Add to Wishlist"}
               </Button>
             </div>
+            {process.env.NODE_ENV === "development" && (
+              <div className="mb-6">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="w-full h-10 text-sm"
+                  onClick={testPayWay}
+                  disabled={isPaywayLoading}
+                >
+                  {isPaywayLoading ? "Testing Payway..." : "Test Payway"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="w-full h-10 text-sm mt-2"
+                  onClick={testPayWayQr}
+                  disabled={isPaywayQrLoading}
+                >
+                  {isPaywayQrLoading ? "Generating QR..." : "Test Payway QR"}
+                </Button>
+              </div>
+            )}
 
             {/* Description */}
             <Card className="mb-6">
