@@ -10,14 +10,13 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import { getProductById, getProducts } from "@/lib/data"
-import { Product } from "@/lib/types"
+import { getProductById, getProducts, type Product as CatalogProduct } from "@/lib/data"
 import { useCartStore } from "@/stores"
 import { ArrowLeft, BookmarkIcon, CheckIcon, Package, RotateCcw, Shield, ShoppingCartIcon, Star, Tag, Truck, XIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound, useParams, useRouter } from "next/navigation"
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { toast } from "sonner"
 
 export default function ProductDetailPage() {
@@ -37,15 +36,14 @@ export default function ProductDetailPage() {
     notFound()
   }
 
-  const handleToggleCart = (product: unknown, checked: boolean) => {
-    const productData = product as Product;
+  const handleToggleCart = (productData: CatalogProduct, checked: boolean) => {
     if (checked) {
       // Add to cart
       addItem({
         id: productData.id,
         name: productData.name,
         price: productData.price,
-        image_url: productData.image_url || "",
+        image_url: productData.image_url?.[0]?.url || "",
         category: productData.category || ""
       })
       toast(`${productData.name} has been added.`, {
@@ -59,23 +57,6 @@ export default function ProductDetailPage() {
       })
     }
   }
-
-  useEffect(() => {
-    // Update cart items when page is loaded
-    const cartItems = localStorage.getItem('cart-items')
-    if (cartItems) {
-      const cartItemsArray = JSON.parse(cartItems)
-      cartItemsArray.forEach((item: any) => {
-        addItem({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          image_url: item.image_url,
-          category: item.category
-        })
-      })
-    }
-  }, [])
 
   const isInCart = items.some(p => p.id === product.id)
 
@@ -245,7 +226,7 @@ export default function ProductDetailPage() {
                 variant="outline"
                 size="lg"
                 disabled={product.stock === 0}
-                onClick={() => handleToggleCart(product as unknown, !isInCart)}
+                onClick={() => handleToggleCart(product, !isInCart)}
               >
                 <BookmarkIcon className="h-5 w-5 mr-2" />
                 {isInCart ? "In Wishlist" : "Add to Wishlist"}

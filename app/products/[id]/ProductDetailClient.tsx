@@ -1,5 +1,6 @@
 "use client";
 
+import { ProductGrid } from "@/components/product-grid";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,50 +11,42 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { type Product, getProductsByShop } from "@/lib/data";
+import { ProductDetailViewModel, ProductGridItem } from "@/lib/product-mappers";
 import { useCartStore } from "@/stores";
 import {
   ArrowLeft,
+  BookmarkIcon,
   CheckIcon,
   Package,
-  ShoppingCartIcon,
-  Tag,
-  XIcon,
-  Star,
-  Truck,
-  Shield,
   RotateCcw,
-  BookmarkIcon,
+  Shield,
+  ShoppingCartIcon,
+  Star,
+  Tag,
+  Truck,
+  XIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
 import { toast } from "sonner";
-import { ShopProductGrid } from "@/components/persona-shop/shop-product-grid";
 
 interface ProductDetailClientProps {
-  product: Product;
-  shop_slug: string;
+  product: ProductDetailViewModel;
+  relatedProducts: ProductGridItem[];
 }
 
-export function ProductDetailClient({ product, shop_slug }: ProductDetailClientProps) {
+export function ProductDetailClient({
+  product,
+  relatedProducts,
+}: ProductDetailClientProps) {
   const { addItem, removeItem, items } = useCartStore();
   const router = useRouter();
 
-  const relatedProducts = useMemo(() => {
-    if (!product || !shop_slug) return [];
-    const shopProducts = getProductsByShop(shop_slug, { inStock: true });
-    return shopProducts
-      .filter(
-        (p) => p.id !== product.id && p.category === product.category
-      )
-      .slice(0, 6);
-  }, [product, shop_slug]);
-
-  const isInCart = items.some((p) => p.id === product.id);
-
-  const handleToggleCart = (productData: Product, checked: boolean) => {
+  const handleToggleCart = (
+    productData: ProductDetailViewModel,
+    checked: boolean
+  ) => {
     if (checked) {
       addItem({
         id: productData.id,
@@ -73,15 +66,12 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
     }
   };
 
+  const isInCart = items.some((item) => item.id === product.id);
+
   return (
-    <main className="min-h-[60vh] bg-background w-full">
+    <main className="min-h-screen bg-background w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link
-          href={`/shop/${shop_slug}?category=${encodeURIComponent(
-            product.category || ""
-          )}`}
-          scroll={false}
-        >
+        <Link href="/products">
           <Button variant="ghost" size="sm" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Products
@@ -93,27 +83,22 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
             <Card className="overflow-hidden">
               <Carousel className="w-full">
                 <CarouselContent>
-                  {product.image_url?.map(
-                    (
-                      image: { url: string; alt: string } | null,
-                      index: number
-                    ) => (
-                      <CarouselItem key={index}>
-                        <div className="relative w-full aspect-square bg-gradient-to-br from-muted/50 to-muted overflow-hidden">
-                          <Image
-                            src={image?.url || ""}
-                            alt={image?.alt || product.name}
-                            fill
-                            priority={index === 0}
-                            className="object-contain p-4 md:p-8 transition-transform duration-300 hover:scale-105"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
-                          />
-                        </div>
-                      </CarouselItem>
-                    )
-                  )}
+                  {product.image_url.map((image, index) => (
+                    <CarouselItem key={`${product.id}-${index}`}>
+                      <div className="relative w-full aspect-square bg-gradient-to-br from-muted/50 to-muted overflow-hidden">
+                        <Image
+                          src={image.url || ""}
+                          alt={image.alt || product.name}
+                          fill
+                          priority={index === 0}
+                          className="object-contain p-4 md:p-8 transition-transform duration-300 hover:scale-105"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
                 </CarouselContent>
-                {product.image_url && product.image_url.length > 1 && (
+                {product.image_url.length > 1 && (
                   <>
                     <CarouselPrevious className="left-4 h-10 w-10 shadow-lg hover:shadow-xl transition-shadow" />
                     <CarouselNext className="right-4 h-10 w-10 shadow-lg hover:shadow-xl transition-shadow" />
@@ -121,27 +106,22 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
                 )}
               </Carousel>
 
-              {product.image_url && product.image_url.length > 1 && (
+              {product.image_url.length > 1 && (
                 <div className="flex justify-center gap-2 p-4 border-t">
-                  {product.image_url.map(
-                    (
-                      image: { url: string; alt: string } | null,
-                      index: number
-                    ) => (
-                      <div
-                        key={index}
-                        className="relative w-16 h-16 rounded-md overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-pointer"
-                      >
-                        <Image
-                          src={image?.url || ""}
-                          alt={image?.alt || `Thumbnail ${index + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                        />
-                      </div>
-                    )
-                  )}
+                  {product.image_url.map((image, index) => (
+                    <div
+                      key={`thumb-${product.id}-${index}`}
+                      className="relative w-16 h-16 rounded-md overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-pointer"
+                    >
+                      <Image
+                        src={image.url || ""}
+                        alt={image.alt || `Thumbnail ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    </div>
+                  ))}
                 </div>
               )}
             </Card>
@@ -151,9 +131,11 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
             <div className="mb-6">
               {product.category && (
                 <Link
-                  href={`/shop/${shop_slug}?category=${encodeURIComponent(
-                    product.category
-                  )}`}
+                  href={
+                    product.categorySlug
+                      ? `/products?categorySlug=${encodeURIComponent(product.categorySlug)}`
+                      : "/products"
+                  }
                 >
                   <Badge
                     variant="secondary"
@@ -177,6 +159,8 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
                     4.8 Rating
                   </Badge>
                 )}
+                {product.isFeatured && <Badge>Featured</Badge>}
+                {product.isNew && <Badge variant="secondary">New</Badge>}
               </div>
             </div>
 
@@ -191,9 +175,7 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
                     >
                       <Package
                         className={`h-5 w-5 ${
-                          product.stock > 0
-                            ? "text-green-600"
-                            : "text-destructive"
+                          product.stock > 0 ? "text-green-600" : "text-destructive"
                         }`}
                       />
                     </div>
@@ -212,9 +194,7 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
                   </div>
                   {product.stock > 0 && (
                     <Badge
-                      variant={
-                        product.stock > 10 ? "default" : "secondary"
-                      }
+                      variant={product.stock > 10 ? "default" : "secondary"}
                       className="text-sm"
                     >
                       {product.stock > 10 ? "In Stock" : "Low Stock"}
@@ -276,8 +256,7 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Product Description</h2>
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {product.description ||
-                    "No description available for this product."}
+                  {product.description || "No description available for this product."}
                 </p>
               </CardContent>
             </Card>
@@ -288,9 +267,7 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Category</span>
-                    <span className="font-medium">
-                      {product.category || "N/A"}
-                    </span>
+                    <span className="font-medium">{product.category || "N/A"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Stock Available</span>
@@ -298,7 +275,7 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">SKU</span>
-                    <span className="font-medium">#{product.id}</span>
+                    <span className="font-medium">{product.sku || "N/A"}</span>
                   </div>
                 </div>
               </CardContent>
@@ -313,21 +290,10 @@ export function ProductDetailClient({ product, shop_slug }: ProductDetailClientP
                 Related Products
               </h2>
               <p className="text-muted-foreground">
-                You might also like these {product.category} products from this
-                shop
+                You might also like these {product.category} products
               </p>
             </div>
-            <ShopProductGrid
-              products={relatedProducts.map((p) => ({
-                ...p,
-                image_url: Array.isArray(p.image_url)
-                  ? p.image_url?.[0]?.url || ""
-                  : typeof p.image_url === "string"
-                  ? p.image_url
-                  : "",
-              }))}
-              shop_slug={shop_slug}
-            />
+            <ProductGrid products={relatedProducts} />
           </section>
         )}
       </div>

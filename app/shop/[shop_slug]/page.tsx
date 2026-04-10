@@ -1,9 +1,8 @@
-
 import { ShopProductGrid } from "@/components/persona-shop/shop-product-grid"
-import { getCategories, getProductsByShop, getShopByName, shops } from "@/lib/data"
+import { getProductsByShop, getShopByName, shops } from "@/lib/data"
 import { notFound } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
-import { MapPin, Store, Star, Package, Award, CheckCircle2, Clock, Users, ArrowLeft } from "lucide-react"
+import { MapPin, Store, Star, Package, Award, CheckCircle2, Clock, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { SellerProductFilters } from "@/components/persona-shop/sellerproduct-filters"
@@ -33,7 +32,10 @@ export default async function ShopPage({
         notFound()
     }
 
-    const categories = getCategories()
+    const shopCategories = getProductsByShop(shopNameSlug, { inStock: true })
+        .map((product) => product.category)
+        .filter((category): category is string => Boolean(category))
+        .filter((category, index, allCategories) => allCategories.indexOf(category) === index)
 
     // Get products for this specific shop
     const products = getProductsByShop(shopNameSlug, {
@@ -168,7 +170,7 @@ export default async function ShopPage({
                         <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
                             <aside className="lg:w-64 flex-shrink-0 lg:sticky lg:top-20">
                                 <SellerProductFilters
-                                    categories={categories}
+                                    categories={shopCategories}
                                     currentCategory={search.category}
                                     currentSearch={search.search}
                                     shop_slug={shop_slug}

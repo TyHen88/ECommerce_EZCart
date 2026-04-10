@@ -946,6 +946,13 @@ export function getProductById(id: string): Product | null {
   return products.find((p) => p.id === id) || null;
 }
 
+export function getProductByShop(
+  shopName: string,
+  productId: string
+): Product | null {
+  return getProductsByShop(shopName).find((p) => p.id === productId) || null;
+}
+
 export function getCategories(): string[] {
   return [...new Set(products.map((p) => p.category).filter(Boolean))];
 }

@@ -94,7 +94,7 @@ export function ShopProductGrid({ products, shop_slug }: { products: Product[], 
                             className="h-10 cursor-pointer data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-blue-500 data-[state=on]:*:[svg]:stroke-blue-500 flex-1"
                         >
                             <BookmarkIcon className="mr-2 h-4 w-4" />
-                            <span className="hidde  n sm:inline">{items.some(p => p.id === product.id) ? "In Wishlist" : "Save"}</span>
+                            <span className="hidden sm:inline">{items.some(p => p.id === product.id) ? "In Wishlist" : "Save"}</span>
                             <span className="sm:hidden">{items.some(p => p.id === product.id) ? "Wishlist" : "Save"}</span>
                         </Toggle>
                     </CardFooter>
