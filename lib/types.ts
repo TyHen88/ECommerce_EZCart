@@ -6,19 +6,24 @@ export interface User {
   updated_at: string;
 }
 
+export interface UserResponseDto {
+  id: number;
+  fullName: string;
+  username: string;
+  email: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  role: string;
+  roles?: string[];
+  permissions?: string[];
+  profileImageUrl: string | null;
+  authProvider: string;
+  addresses?: AddressResponseDto[];
+}
+
 export interface UserInfo {
-  data: {
-    id: number;
-    fullName: string;
-    username: string;
-    email: string;
-    active: boolean;
-    createdAt: string;
-    updatedAt: string;
-    role: string;
-    profileImageUrl: string | null;
-    authProvider: string;
-  } | null;
+  data: UserResponseDto | null;
 }
 
 export interface Product {
@@ -37,6 +42,39 @@ export interface Product {
 export interface LoginRequest {
   user_name: string;
   password: string;
+}
+
+export interface RegisterRequest {
+  fullName: string;
+  username: string;
+  email: string;
+  password: string;
+  role?: string;
+}
+
+export interface RefreshTokenRequest {
+  refresh_token: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface UpdatePasswordRequestDto {
+  old_password: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface SetupPasswordRequest {
+  new_password: string;
+  confirm_password: string;
 }
 
 export interface ApiResponse<T> {
@@ -175,4 +213,178 @@ export interface ProductListParams {
   sort?: string;
   page?: number;
   size?: number;
+}
+
+export interface UserRequestDto {
+  fullName: string;
+  username: string;
+  email: string;
+  password: string;
+  profileImageUrl?: string | null;
+}
+
+export interface UserSearchParams {
+  email?: string;
+  username?: string;
+}
+
+export interface CategoryRequestDto {
+  name: string;
+  slug: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  isActive?: boolean;
+  parentId?: number | null;
+}
+
+export interface CategoryResponseDto {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  isActive?: boolean;
+  parentId?: number | null;
+}
+
+export interface AddressRequestDto {
+  type: string;
+  fullName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2?: string | null;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  isDefault?: boolean;
+}
+
+export interface AddressResponseDto {
+  id: number;
+  type: string;
+  fullName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2?: string | null;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUserRequestDto {
+  fullName: string;
+  username: string;
+  email: string;
+  password: string;
+  role: string;
+  roles: string[];
+  active: boolean;
+}
+
+export interface AdminUserListParams {
+  isActive?: boolean;
+  search?: string;
+  sort?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface SellerProfileRequestDto {
+  storeName: string;
+  storeDescription: string;
+  storeLogoUrl?: string | null;
+  storeBannerUrl?: string | null;
+  businessRegistrationNumber?: string | null;
+  businessAddress?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  establishedDate?: string | null;
+  returnPolicy?: string | null;
+  shippingPolicy?: string | null;
+}
+
+export interface SellerProfileUpdateRequestDto {
+  id: number;
+  storeName: string;
+  storeDescription: string;
+  storeLogoUrl?: string | null;
+  storeBannerUrl?: string | null;
+  businessRegistrationNumber?: string | null;
+  businessAddress?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  returnPolicy?: string | null;
+  shippingPolicy?: string | null;
+}
+
+export interface SellerProfileResponseDto {
+  id: number;
+  userId: number;
+  username: string;
+  userEmail: string;
+  storeName: string;
+  storeDescription: string;
+  storeLogoUrl?: string | null;
+  storeBannerUrl?: string | null;
+  sellerRating: number;
+  totalReviews: number;
+  totalSales: number;
+  verifiedSeller: boolean;
+  businessRegistrationNumber?: string | null;
+  businessAddress?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  establishedDate?: string | null;
+  returnPolicy?: string | null;
+  shippingPolicy?: string | null;
+  active: boolean;
+  verificationDate?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SellerProfileListParams {
+  isActive?: boolean;
+  isVerified?: boolean;
+  search?: string;
+  sort?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface PaywayPurchaseItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+export interface PaywayPurchaseRequest {
+  req_time: string;
+  merchant_id: string;
+  tran_id: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  phone: string;
+  type: string;
+  payment_option: string;
+  items_list: PaywayPurchaseItem[];
+  shipping: number;
+  amount: number;
+  currency: string;
+  return_url: string;
+  cancel_url: string;
+  continue_success_url: string;
+  custom_fields: string;
+  return_params: string;
+  hash: string;
+}
+
+export interface PaywayVerifyRequest {
+  tran_id: string;
 }
