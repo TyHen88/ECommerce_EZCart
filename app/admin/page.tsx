@@ -3,24 +3,27 @@ import { AdminProductList } from "@/components/admin-product-list"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import Link from "next/link"
-import { getProducts } from "@/lib/data"
+import { productService } from "@/service/product.service"
+import { ProductResponseDto } from "@/lib/types"
 
 export default async function AdminPage() {
   // For demo purposes, we'll assume user is always admin
   // In a real app, you'd check authentication here
-  const dataProducts = await getProducts()
+
+  // Fetch products from API
+  const response = await productService.getProducts({ page: 0, size: 100 })
+  const apiProducts = response.data.data
 
   // Transform products to match AdminProductList expected format
-  const products = dataProducts.map((product) => ({
-    id: product.id,
-    name: product.name,
+  const products = apiProducts.map((product: ProductResponseDto) => ({
+    id: product.id.toString(),
+    slug: product.slug,
+    name: product.title,
     description: product.description || null,
     price: product.price,
-    image_url: Array.isArray(product.image_url) && product.image_url.length > 0
-      ? product.image_url[0].url
-      : null,
-    stock: product.stock,
-    category: product.category || null,
+    image_url: product.images.find(img => img.isPrimary)?.imageUrl || product.images[0]?.imageUrl || null,
+    stock: product.variations.reduce((sum, v) => sum + v.stockQuantity, 0),
+    category: product.categories.map(c => c.name).join(", ") || null,
   }))
 
   return (

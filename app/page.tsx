@@ -8,24 +8,63 @@ import { ShoppingCart, Search, Star, Package, RotateCcw, Headphones, ArrowRight,
 import Link from "next/link"
 import Image from "next/image"
 import { useEffect, useState } from "react"
-import { getProducts, getCategories, type Product } from "@/lib/data"
+import { productService } from "@/service/product.service"
+import { ProductCategoryDto, ProductResponseDto } from "@/lib/types"
+
+interface FeaturedProduct {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: { url: string; alt: string }[];
+  stock: number;
+  category: string;
+  created_at: string;
+}
 
 export default function HomePage() {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
-    // Fetch featured products (first 8)
-    const products = getProducts({ inStock: true }).slice(0, 8)
-    setFeaturedProducts(products)
+    const fetchData = async () => {
+      try {
+        // Fetch featured products (first 8)
+        const response = await productService.getProducts({ page: 0, size: 8 })
+        const apiProducts = response.data.data
 
-    // Fetch categories
-    const cats = getCategories()
-    setCategories(cats.slice(0, 6))
+        // Transform API products to match expected format
+        const transformedProducts: FeaturedProduct[] = apiProducts.map((p: ProductResponseDto) => ({
+          id: p.id.toString(),
+          slug: p.slug,
+          name: p.title,
+          description: p.description || "",
+          price: p.price,
+          image_url: p.images.map(img => ({
+            url: img.imageUrl,
+            alt: img.altText || p.title
+          })),
+          stock: p.variations.reduce((sum, v) => sum + v.stockQuantity, 0),
+          category: p.categories.map(c => c.name).join(", ") || "Uncategorized",
+          created_at: p.createdAt
+        }))
 
-    // Trigger animations
-    setIsVisible(true)
+        setFeaturedProducts(transformedProducts)
+
+        // Fetch categories
+        const catResponse = await productService.getCategories()
+        const catNames = catResponse.map((c: ProductCategoryDto) => c.name)
+        setCategories(catNames.slice(0, 6))
+      } catch (error) {
+        console.error("Failed to fetch data:", error)
+      } finally {
+        setIsVisible(true)
+      }
+    }
+
+    fetchData()
   }, [])
 
   const benefits = [
@@ -197,7 +236,7 @@ export default function HomePage() {
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
                 <CardHeader className="p-0">
-                  <Link href={`/products/${product.id}`}>
+                  <Link href={`/products/${product.slug}`}>
                     <div className="aspect-square relative overflow-hidden bg-muted">
                       {product.image_url?.[0] ? (
                         <Image
@@ -220,7 +259,7 @@ export default function HomePage() {
                   </Link>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <Link href={`/products/${product.id}`}>
+                  <Link href={`/products/${product.slug}`}>
                     <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-1">
                       {product.name}
                     </h3>
@@ -243,7 +282,7 @@ export default function HomePage() {
                   </Link>
                 </CardContent>
                 <CardFooter className="p-4 pt-0 gap-2">
-                  <Link href={`/products/${product.id}`} className="flex-1">
+                  <Link href={`/products/${product.slug}`} className="flex-1">
                     <Button className="w-full" variant="outline">
                       View Details
                     </Button>

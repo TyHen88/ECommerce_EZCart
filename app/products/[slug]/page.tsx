@@ -1,76 +1,156 @@
-"use client";
-
-import { ProductGrid } from "@/components/product-grid";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+"use client"
+import { ProductGrid } from "@/components/product-grid"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel";
-import { ProductDetailViewModel, ProductGridItem } from "@/lib/product-mappers";
-import { useCartStore } from "@/stores";
-import {
-  ArrowLeft,
-  BookmarkIcon,
-  CheckIcon,
-  Package,
-  RotateCcw,
-  Shield,
-  ShoppingCartIcon,
-  Star,
-  Tag,
-  Truck,
-  XIcon,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+} from "@/components/ui/carousel"
+import { productService } from "@/service/product.service"
+import { ProductResponseDto } from "@/lib/types"
+import { useCartStore } from "@/stores"
+import { ArrowLeft, BookmarkIcon, CheckIcon, Package, RotateCcw, Shield, ShoppingCartIcon, Star, Tag, Truck, XIcon } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { notFound, useParams, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
-interface ProductDetailClientProps {
-  product: ProductDetailViewModel;
-  relatedProducts: ProductGridItem[];
+interface CatalogProduct {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  price: number;
+  image_url: { url: string; alt: string }[] | null;
+  stock: number;
+  category: string | null;
 }
 
-export function ProductDetailClient({
-  product,
-  relatedProducts,
-}: ProductDetailClientProps) {
-  const { addItem, removeItem, items } = useCartStore();
-  const router = useRouter();
+export default function ProductDetailPage() {
+  const params = useParams<{ slug: string }>()
+  const slug = params?.slug
+  const [product, setProduct] = useState<CatalogProduct | null>(null)
+  const [relatedProducts, setRelatedProducts] = useState<CatalogProduct[]>([])
+  const [loading, setLoading] = useState(true)
+  const { addItem, removeItem, items } = useCartStore()
+  const router = useRouter()
 
-  const handleToggleCart = (
-    productData: ProductDetailViewModel,
-    checked: boolean
-  ) => {
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!slug) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        // Fetch product by SLUG instead of ID
+        const response = await productService.getProductBySlug(slug)
+        const apiProduct = response.data
+
+        // Transform to CatalogProduct format
+        const transformedProduct: CatalogProduct = {
+          id: apiProduct.id.toString(),
+          slug: apiProduct.slug,
+          name: apiProduct.title,
+          description: apiProduct.description,
+          price: apiProduct.price,
+          image_url: apiProduct.images.map(img => ({
+            url: img.imageUrl,
+            alt: img.altText || apiProduct.title
+          })),
+          stock: apiProduct.variations.reduce((sum, v) => sum + v.stockQuantity, 0),
+          category: apiProduct.categories.map(c => c.name).join(", ") || null
+        }
+
+        setProduct(transformedProduct)
+
+        // Fetch related products (same category)
+        const categorySlug = apiProduct.categories[0]?.slug
+        if (categorySlug) {
+          const relatedResponse = await productService.getProducts({
+            categorySlug,
+            page: 0,
+            size: 7
+          })
+          const relatedApiProducts = relatedResponse.data.data.filter(
+            (p: ProductResponseDto) => p.id !== apiProduct.id
+          ).slice(0, 6)
+
+          const transformedRelated: CatalogProduct[] = relatedApiProducts.map((p: ProductResponseDto) => ({
+            id: p.id.toString(),
+            slug: p.slug,
+            name: p.title,
+            description: p.description,
+            price: p.price,
+            image_url: p.images.map(img => ({
+              url: img.imageUrl,
+              alt: img.altText || p.title
+            })),
+            stock: p.variations.reduce((sum, v) => sum + v.stockQuantity, 0),
+            category: p.categories.map(c => c.name).join(", ") || null
+          }))
+
+          setRelatedProducts(transformedRelated)
+        }
+      } catch (error) {
+        console.error("Failed to fetch product:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProduct()
+  }, [slug])
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-background w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center h-96">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (!product) {
+    notFound()
+  }
+
+  const handleToggleCart = (productData: CatalogProduct, checked: boolean) => {
     if (checked) {
+      // Add to cart
       addItem({
         id: productData.id,
         name: productData.name,
         price: productData.price,
         image_url: productData.image_url?.[0]?.url || "",
-        category: productData.category || "",
-      });
+        category: productData.category || ""
+      })
       toast(`${productData.name} has been added.`, {
-        icon: <CheckIcon className="text-green-500 w-5 h-5" />,
-      });
+        icon: <CheckIcon className="text-green-500 w-5 h-5" />
+      })
     } else {
-      removeItem(productData.id);
+      // Remove from cart
+      removeItem(productData.id)
       toast(`${productData.name} has been removed.`, {
-        icon: <XIcon className="text-red-500 w-5 h-5" />,
-      });
+        icon: <XIcon className="text-red-500 w-5 h-5" />
+      })
     }
-  };
+  }
 
-  const isInCart = items.some((item) => item.id === product.id);
+  const isInCart = items.some(p => p.id === product.id)
 
   return (
     <main className="min-h-screen bg-background w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back Button */}
         <Link href="/products">
           <Button variant="ghost" size="sm" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -78,17 +158,19 @@ export function ProductDetailClient({
           </Button>
         </Link>
 
+        {/* Main Product Section */}
         <div className="grid gap-8 lg:grid-cols-2 mb-16">
+          {/* Image Carousel */}
           <div className="relative w-full">
             <Card className="overflow-hidden">
               <Carousel className="w-full">
                 <CarouselContent>
-                  {product.image_url.map((image, index) => (
-                    <CarouselItem key={`${product.id}-${index}`}>
+                  {product.image_url?.map((image: { url: string; alt: string } | null, index: number) => (
+                    <CarouselItem key={index}>
                       <div className="relative w-full aspect-square bg-gradient-to-br from-muted/50 to-muted overflow-hidden">
                         <Image
-                          src={image.url || ""}
-                          alt={image.alt || product.name}
+                          src={image?.url || ""}
+                          alt={image?.alt || product.name}
                           fill
                           priority={index === 0}
                           className="object-contain p-4 md:p-8 transition-transform duration-300 hover:scale-105"
@@ -98,7 +180,7 @@ export function ProductDetailClient({
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                {product.image_url.length > 1 && (
+                {product.image_url && product.image_url.length > 1 && (
                   <>
                     <CarouselPrevious className="left-4 h-10 w-10 shadow-lg hover:shadow-xl transition-shadow" />
                     <CarouselNext className="right-4 h-10 w-10 shadow-lg hover:shadow-xl transition-shadow" />
@@ -106,16 +188,17 @@ export function ProductDetailClient({
                 )}
               </Carousel>
 
-              {product.image_url.length > 1 && (
+              {/* Image Thumbnails */}
+              {product.image_url && product.image_url.length > 1 && (
                 <div className="flex justify-center gap-2 p-4 border-t">
-                  {product.image_url.map((image, index) => (
+                  {product.image_url.map((image: { url: string; alt: string } | null, index: number) => (
                     <div
-                      key={`thumb-${product.id}-${index}`}
+                      key={index}
                       className="relative w-16 h-16 rounded-md overflow-hidden border-2 border-border hover:border-primary transition-colors cursor-pointer"
                     >
                       <Image
-                        src={image.url || ""}
-                        alt={image.alt || `Thumbnail ${index + 1}`}
+                        src={image?.url || ""}
+                        alt={image?.alt || `Thumbnail ${index + 1}`}
                         fill
                         className="object-cover"
                         sizes="64px"
@@ -127,20 +210,13 @@ export function ProductDetailClient({
             </Card>
           </div>
 
+          {/* Product Details */}
           <div className="flex flex-col">
+            {/* Category & Title */}
             <div className="mb-6">
               {product.category && (
-                <Link
-                  href={
-                    product.categorySlug
-                      ? `/products?categorySlug=${encodeURIComponent(product.categorySlug)}`
-                      : "/products"
-                  }
-                >
-                  <Badge
-                    variant="secondary"
-                    className="mb-3 hover:bg-secondary/80 transition-colors cursor-pointer"
-                  >
+                <Link href={`/products?category=${encodeURIComponent(product.category)}`}>
+                  <Badge variant="secondary" className="mb-3 hover:bg-secondary/80 transition-colors cursor-pointer">
                     <Tag className="mr-1 h-3 w-3" />
                     {product.category}
                   </Badge>
@@ -159,25 +235,16 @@ export function ProductDetailClient({
                     4.8 Rating
                   </Badge>
                 )}
-                {product.isFeatured && <Badge>Featured</Badge>}
-                {product.isNew && <Badge variant="secondary">New</Badge>}
               </div>
             </div>
 
+            {/* Stock Status */}
             <Card className="mb-6 border-2">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`p-2 rounded-full ${
-                        product.stock > 0 ? "bg-green-100" : "bg-destructive/10"
-                      }`}
-                    >
-                      <Package
-                        className={`h-5 w-5 ${
-                          product.stock > 0 ? "text-green-600" : "text-destructive"
-                        }`}
-                      />
+                    <div className={`p-2 rounded-full ${product.stock > 0 ? 'bg-green-100' : 'bg-destructive/10'}`}>
+                      <Package className={`h-5 w-5 ${product.stock > 0 ? 'text-green-600' : 'text-destructive'}`} />
                     </div>
                     <div>
                       <p className="font-semibold">Availability</p>
@@ -204,6 +271,7 @@ export function ProductDetailClient({
               </CardContent>
             </Card>
 
+            {/* Features */}
             <div className="grid grid-cols-3 gap-4 mb-6">
               <Card>
                 <CardContent className="p-4 text-center">
@@ -228,6 +296,8 @@ export function ProductDetailClient({
               </Card>
             </div>
 
+            {/* Add to Cart Button */}
+            {/* Add to Cart Button */}
             <div className="flex flex-row justify-between gap-2 mb-6">
               <Button
                 size="lg"
@@ -239,9 +309,7 @@ export function ProductDetailClient({
                 Checkout
               </Button>
               <Button
-                className={`w-1/2 h-10 text-sm cursor-pointer ${
-                  isInCart ? "bg-green-600 hover:bg-green-700" : ""
-                }`}
+                className={`w-1/2 h-10 text-sm cursor-pointer ${isInCart ? "bg-green-600 hover:bg-green-700" : ""}`}
                 variant="outline"
                 size="lg"
                 disabled={product.stock === 0}
@@ -252,6 +320,7 @@ export function ProductDetailClient({
               </Button>
             </div>
 
+            {/* Description */}
             <Card className="mb-6">
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Product Description</h2>
@@ -261,6 +330,7 @@ export function ProductDetailClient({
               </CardContent>
             </Card>
 
+            {/* Additional Info */}
             <Card>
               <CardContent className="p-6">
                 <h3 className="font-semibold mb-4">Product Information</h3>
@@ -275,7 +345,7 @@ export function ProductDetailClient({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">SKU</span>
-                    <span className="font-medium">{product.sku || "N/A"}</span>
+                    <span className="font-medium">#{product.id}</span>
                   </div>
                 </div>
               </CardContent>
@@ -283,20 +353,22 @@ export function ProductDetailClient({
           </div>
         </div>
 
+        {/* Related Products Section is for products from multiple sellers */}
         {relatedProducts.length > 0 && (
           <section className="border-t pt-12">
             <div className="mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">
-                Related Products
-              </h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Related Products</h2>
               <p className="text-muted-foreground">
                 You might also like these {product.category} products
               </p>
             </div>
-            <ProductGrid products={relatedProducts} />
+            <ProductGrid products={relatedProducts.map(p => ({
+              ...p,
+              image_url: p.image_url?.[0]?.url || ""
+            }))} />
           </section>
         )}
       </div>
     </main>
-  );
+  )
 }

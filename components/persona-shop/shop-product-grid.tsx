@@ -11,6 +11,7 @@ import { useCartStore } from "@/stores/cart.store"
 
 type Product = {
     id: string
+    slug: string
     name: string
     description: string | null
     price: number
@@ -83,7 +84,7 @@ export function ShopProductGrid({ products, shop_slug }: { products: Product[], 
                         </div>
                     </CardContent>
                     <CardFooter className="p-6 pt-0 gap-2 flex items-stretch">
-                        <Link href={`/shop/${shop_slug}/product/${product.id}`} className="flex-1">
+                        <Link href={`/shop/${shop_slug}/product/${product.slug}`} className="flex-1">
                             <Button className="w-full cursor-pointer">View Details</Button>
                         </Link>
                         <Toggle

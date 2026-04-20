@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 
 type Product = {
   id: string
+  slug: string
   name: string
   description: string | null
   price: number
@@ -97,7 +98,7 @@ export function AdminProductList({ products }: { products: Product[] }) {
               )}
             </CardContent>
             <CardFooter className="flex gap-2">
-              <Link href={`/admin/products/${product.id}/edit`} className="flex-1">
+              <Link href={`/admin/products/${product.slug}/edit`} className="flex-1">
                 <Button variant="outline" className="w-full bg-transparent">
                   <Edit className="mr-2 h-4 w-4" />
                   Edit

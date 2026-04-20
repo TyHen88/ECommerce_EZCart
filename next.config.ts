@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
       'www.qoltec.com',
       'dragonimage.com.au',
       'images.domain.com.au',
+      'placehold.co',
     ],
   },
 }

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import useFetchProfile from "@/hooks/useFetchProfile";
 import { useRouter } from "next/navigation";
-import { performLogout } from "@/utils/auth";
+import { performLogout, getAuthToken } from "@/utils/auth";
 import SettingSkeleton from "../shared/SettingSkeleton";
 import ProfileSettings from "./ProfileSettings";
 import OrderHistorySettings from "./OrderHistorySettings";
@@ -41,6 +41,14 @@ const SettingsContainer = () => {
   const router = useRouter();
   const { data: userInfoData, isLoading } = useFetchProfile();
   const [activeMenu, setActiveMenu] = useState("profile");
+
+  // Check authentication and redirect if not logged in
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) {
+      router.push("/auth/login?callbackUrl=/setting&error=AuthenticationRequired");
+    }
+  }, [router]);
   const sections: CollapsibleSection[] = [
     {
       id: "personal-info",

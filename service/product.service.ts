@@ -71,7 +71,8 @@ export const productService = {
   },
 
   getCategories: async (): Promise<ProductCategoryDto[]> => {
-    const response = await http.get(ServiceId.CATEGORIES);
-    return response.data;
+    const response = await http.get<ApiResponse<ProductCategoryDto[]>>(ServiceId.CATEGORIES);
+    // The API returns ApiResponse<ProductCategoryDto[]>, so we need to access response.data.data
+    return response.data.data || [];
   },
 };

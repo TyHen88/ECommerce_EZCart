@@ -1,5 +1,6 @@
 import { ShopProductGrid } from "@/components/persona-shop/shop-product-grid"
-import { getProductsByShop, getShopByName, shops } from "@/lib/data"
+import { productService } from "@/service/product.service"
+import { ProductCategoryDto, ProductResponseDto } from "@/lib/types"
 import { notFound } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { MapPin, Store, Star, Package, Award, CheckCircle2, Clock, ArrowLeft } from "lucide-react"
@@ -8,10 +9,55 @@ import { Button } from "@/components/ui/button"
 import { SellerProductFilters } from "@/components/persona-shop/sellerproduct-filters"
 import { Badge } from "@/components/ui/badge"
 
-export async function generateStaticParams() {
-    return shops.map((shop) => ({
-        shop_slug: shop.shopName.toLowerCase().replace(/\s+/g, '-'),
-    }))
+// Mock shop data - TODO: Replace with shop API when available
+const shops = [
+  {
+    id: 1,
+    shopName: "Nordic Home Studio",
+    brandName: "NORDIC HOME",
+    owner: "Emma Anderson",
+    logo: "🏠",
+    coverImage: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    rating: 4.9,
+    totalReviews: 2847,
+    totalProducts: 156,
+    followers: 12500,
+    verified: true,
+    featured: true,
+    category: "furniture",
+    location: "Brooklyn, NY",
+    memberSince: "2020",
+    description: "Scandinavian-inspired furniture and home decor. Quality craftsmanship with minimalist design.",
+    responseTime: "< 2 hours",
+    tags: ["Scandinavian", "Minimalist", "Eco-friendly"],
+    badges: ["Top Seller", "Fast Shipping"],
+  },
+  // ... other shops can be added here
+]
+
+function getShopByName(name: string) {
+  const normalizedInput = name.toLowerCase().trim()
+  return shops.find((s) => {
+    const shopNameKebab = s.shopName.toLowerCase().replace(/\s+/g, "-")
+    const shopNameLower = s.shopName.toLowerCase()
+    return (
+      shopNameKebab === normalizedInput ||
+      shopNameLower === normalizedInput ||
+      shopNameLower.replace(/\s+/g, "-") === normalizedInput
+    )
+  }) || null
+}
+
+interface ShopProduct {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: { url: string; alt: string }[];
+  stock: number;
+  category: string;
+  created_at: string;
 }
 
 export default async function ShopPage({
@@ -32,17 +78,34 @@ export default async function ShopPage({
         notFound()
     }
 
-    const shopCategories = getProductsByShop(shopNameSlug, { inStock: true })
-        .map((product) => product.category)
-        .filter((category): category is string => Boolean(category))
-        .filter((category, index, allCategories) => allCategories.indexOf(category) === index)
-
-    // Get products for this specific shop
-    const products = getProductsByShop(shopNameSlug, {
-        category: search.category,
-        search: search.search,
-        inStock: true
+    // Fetch products from API (all products for now, filter by category if provided)
+    const response = await productService.getProducts({
+      categorySlug: search.category,
+      search: search.search,
+      page: 0,
+      size: 100
     })
+
+    const apiProducts = response.data.data
+
+    // Transform API products to match expected format
+    const products: ShopProduct[] = apiProducts.map((p: ProductResponseDto) => ({
+      id: p.id.toString(),
+      slug: p.slug,
+      name: p.title,
+      description: p.description || "",
+      price: p.price,
+      image_url: p.images.map(img => ({
+        url: img.imageUrl,
+        alt: img.altText || p.title
+      })),
+      stock: p.variations.reduce((sum, v) => sum + v.stockQuantity, 0),
+      category: p.categories.map(c => c.name).join(", ") || "Uncategorized",
+      created_at: p.createdAt
+    }))
+
+    // Get unique categories from products
+    const shopCategories = [...new Set(products.map(p => p.category).filter(Boolean))]
 
     return (
         <div className="w-full h-full flex flex-col min-h-screen bg-background">

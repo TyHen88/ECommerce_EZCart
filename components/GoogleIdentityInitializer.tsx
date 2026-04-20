@@ -37,7 +37,14 @@ const ONE_TAP_DELAY = 200
 const RELOAD_DELAY = 500
 
 const FEDCM_ERROR_PATTERNS = ['FedCM', 'IdentityCredentialError', '[GSI_LOGGER]']
-const SUPPRESSED_ERROR_PATTERNS = ['HTTP Response Error', 'NetworkError', 'Failed to fetch']
+const SUPPRESSED_ERROR_PATTERNS = [
+    'HTTP Response Error',
+    'Network error',
+    'Failed to fetch',
+    'Next.js error',
+    'url.parse()',
+    'DeprecationWarning',
+]
 
 export function GoogleIdentityInitializer() {
     useEffect(() => {

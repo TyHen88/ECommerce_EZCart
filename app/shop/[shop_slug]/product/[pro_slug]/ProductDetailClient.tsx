@@ -10,7 +10,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { type Product, getProductsByShop } from "@/lib/data";
+import { productService } from "@/service/product.service";
+import { ProductResponseDto } from "@/lib/types";
 import { useCartStore } from "@/stores";
 import {
   ArrowLeft,
@@ -28,32 +29,78 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ShopProductGrid } from "@/components/persona-shop/shop-product-grid";
 
+interface CatalogProduct {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: { url: string; alt: string }[];
+  stock: number;
+  category: string;
+  created_at: string;
+}
+
 interface ProductDetailClientProps {
-  product: Product;
+  product: CatalogProduct;
   shop_slug: string;
 }
 
 export function ProductDetailClient({ product, shop_slug }: ProductDetailClientProps) {
   const { addItem, removeItem, items } = useCartStore();
   const router = useRouter();
+  const [relatedProducts, setRelatedProducts] = useState<CatalogProduct[]>([]);
 
-  const relatedProducts = useMemo(() => {
-    if (!product || !shop_slug) return [];
-    const shopProducts = getProductsByShop(shop_slug, { inStock: true });
-    return shopProducts
-      .filter(
-        (p) => p.id !== product.id && p.category === product.category
-      )
-      .slice(0, 6);
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      if (!product || !shop_slug) return;
+
+      try {
+        // Get category slug from product category
+        const categoryNames = product.category.split(", ").filter(Boolean);
+        if (categoryNames.length === 0) return;
+
+        // Fetch related products from same category
+        const response = await productService.getProducts({
+          page: 0,
+          size: 7
+        });
+
+        const apiProducts = response.data.data.filter(
+          (p: ProductResponseDto) => p.id.toString() !== product.id
+        ).slice(0, 6);
+
+        const transformedProducts: CatalogProduct[] = apiProducts.map((p: ProductResponseDto) => ({
+          id: p.id.toString(),
+          slug: p.slug,
+          name: p.title,
+          description: p.description || "",
+          price: p.price,
+          image_url: p.images.map(img => ({
+            url: img.imageUrl,
+            alt: img.altText || p.title
+          })),
+          stock: p.variations.reduce((sum, v) => sum + v.stockQuantity, 0),
+          category: p.categories.map(c => c.name).join(", ") || "Uncategorized",
+          created_at: p.createdAt
+        }));
+
+        setRelatedProducts(transformedProducts);
+      } catch (error) {
+        console.error("Failed to fetch related products:", error);
+      }
+    };
+
+    fetchRelatedProducts();
   }, [product, shop_slug]);
 
   const isInCart = items.some((p) => p.id === product.id);
 
-  const handleToggleCart = (productData: Product, checked: boolean) => {
+  const handleToggleCart = (productData: CatalogProduct, checked: boolean) => {
     if (checked) {
       addItem({
         id: productData.id,

@@ -4,7 +4,7 @@
  */
 
 // Routes that require authentication (any logged-in user)
-export const PROTECTED_ROUTES = ["/setting", "/checkout"] as const;
+export const PROTECTED_ROUTES = ["/checkout"] as const;
 
 // Routes that require admin role
 export const ADMIN_ROUTES = ["/admin"] as const;
